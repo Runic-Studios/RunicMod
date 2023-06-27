@@ -1,0 +1,5 @@
+name: RunicSpy
+version: '${version}'
+main: com.runicrealms.runicspy.RunicSpy
+api-version: '1.19'
+author: 'BoBoBalloon'
