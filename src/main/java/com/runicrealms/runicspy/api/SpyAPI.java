@@ -1,5 +1,6 @@
 package com.runicrealms.runicspy.api;
 
+import com.runicrealms.runicspy.spy.SpyInfo;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

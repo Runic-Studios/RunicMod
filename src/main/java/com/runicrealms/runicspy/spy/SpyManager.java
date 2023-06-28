@@ -5,10 +5,11 @@ import com.runicrealms.api.chat.ChatChannel;
 import com.runicrealms.api.event.ChatChannelMessageEvent;
 import com.runicrealms.channels.StaffChannel;
 import com.runicrealms.plugin.RunicCore;
-import com.runicrealms.plugin.api.SpyAPI;
 import com.runicrealms.plugin.common.util.ChatUtils;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.rdb.event.CharacterQuitEvent;
+import com.runicrealms.runicspy.RunicMod;
+import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.ui.InventoryPreview;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -25,11 +26,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * A class that manages all mods in spy mode
@@ -76,14 +73,14 @@ public final class SpyManager implements SpyAPI, Listener {
             this.removeSpy(spy);
         }
 
-        BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(RunicCore.getInstance(), () -> {
+        BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(RunicMod.getInstance(), () -> {
             SpyInfo info = this.getInfo(spy);
 
             if (info == null) {
                 throw new IllegalStateException("This cannot be run until the spy is registered!");
             }
 
-            Bukkit.getScheduler().runTask(RunicCore.getInstance(), () -> {
+            Bukkit.getScheduler().runTask(RunicMod.getInstance(), () -> {
                 if (info.getTarget().isOnline()) {
                     info.setCenter(target.getLocation());
                 }

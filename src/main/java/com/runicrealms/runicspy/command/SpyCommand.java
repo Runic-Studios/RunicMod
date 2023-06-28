@@ -1,16 +1,10 @@
 package com.runicrealms.runicspy.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CatchUnknown;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandCompletion;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Conditions;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Subcommand;
-import com.runicrealms.plugin.RunicCore;
-import com.runicrealms.plugin.api.SpyAPI;
+import co.aikar.commands.annotation.*;
 import com.runicrealms.plugin.common.util.ColorUtil;
+import com.runicrealms.runicspy.RunicMod;
+import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.spy.SpyInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -59,7 +53,7 @@ public class SpyCommand extends BaseCommand {
             return;
         }
 
-        SpyAPI api = RunicCore.getSpyAPI();
+        SpyAPI api = RunicMod.getSpyAPI();
 
         SpyInfo info = api.getInfo(player);
 
@@ -76,7 +70,7 @@ public class SpyCommand extends BaseCommand {
     @Subcommand("stop")
     @CommandCompletion("@nothing")
     private void onStop(@NotNull Player player) {
-        SpyAPI api = RunicCore.getSpyAPI();
+        SpyAPI api = RunicMod.getSpyAPI();
 
         SpyInfo info = api.getInfo(player);
 
@@ -93,7 +87,7 @@ public class SpyCommand extends BaseCommand {
     @Subcommand("inventory|inv")
     @CommandCompletion("@nothing")
     private void onInventory(@NotNull Player player) {
-        SpyAPI api = RunicCore.getSpyAPI();
+        SpyAPI api = RunicMod.getSpyAPI();
 
         SpyInfo info = api.getInfo(player);
 
@@ -109,7 +103,7 @@ public class SpyCommand extends BaseCommand {
     @Subcommand("bank")
     @CommandCompletion("@nothing")
     private void onBank(@NotNull Player player) {
-        SpyAPI api = RunicCore.getSpyAPI();
+        SpyAPI api = RunicMod.getSpyAPI();
 
         SpyInfo info = api.getInfo(player);
 
