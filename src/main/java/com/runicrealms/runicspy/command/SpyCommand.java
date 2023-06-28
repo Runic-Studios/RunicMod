@@ -1,7 +1,13 @@
 package com.runicrealms.runicspy.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
+import co.aikar.commands.annotation.CatchUnknown;
+import co.aikar.commands.annotation.CommandAlias;
+import co.aikar.commands.annotation.CommandCompletion;
+import co.aikar.commands.annotation.CommandPermission;
+import co.aikar.commands.annotation.Conditions;
+import co.aikar.commands.annotation.Default;
+import co.aikar.commands.annotation.Subcommand;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
