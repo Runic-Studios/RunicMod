@@ -67,7 +67,7 @@ public class InventoryPreview implements InventoryHolder {
      */
     @NotNull
     private static ItemStack blank() {
-        ItemStack blank = new ItemStack(Material.IRON_BARS);
+        ItemStack blank = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = blank.getItemMeta();
         meta.setDisplayName("");
         blank.setItemMeta(meta);

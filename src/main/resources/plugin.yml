@@ -1,5 +1,5 @@
-name: RunicSpy
+name: RunicMod
 version: '${version}'
-main: com.runicrealms.runicspy.RunicSpy
+main: com.runicrealms.runicspy.RunicMod
 api-version: '1.19'
 author: 'BoBoBalloon'

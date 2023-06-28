@@ -10,14 +10,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-public final class RunicSpy extends JavaPlugin {
-    private static RunicSpy plugin;
+public final class RunicMod extends JavaPlugin {
+    private static RunicMod plugin;
     private SpyManager spyManager;
     private PaperCommandManager commandManager;
 
     @Override
     public void onEnable() {
-        RunicSpy.plugin = this;
+        RunicMod.plugin = this;
         this.spyManager = new SpyManager();
         this.commandManager = new PaperCommandManager(this);
 
@@ -42,12 +42,12 @@ public final class RunicSpy extends JavaPlugin {
      * @return the singleton instance of the plugin
      */
     @NotNull
-    public static RunicSpy getInstance() {
-        if (RunicSpy.plugin == null) {
-            throw new IllegalStateException("You called the getInstance() method before RunicSpy was enabled!");
+    public static RunicMod getInstance() {
+        if (RunicMod.plugin == null) {
+            throw new IllegalStateException("You called the getInstance() method before RunicMod was enabled!");
         }
 
-        return RunicSpy.plugin;
+        return RunicMod.plugin;
     }
 
     /**

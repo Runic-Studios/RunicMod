@@ -33,7 +33,7 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             groupId = "com.runicrealms"
-            artifactId = "spy"
+            artifactId = "mod"
             version = "1.0"
             from(components["java"])
         }
