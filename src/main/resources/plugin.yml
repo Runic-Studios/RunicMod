@@ -3,3 +3,9 @@ version: '${version}'
 main: com.runicrealms.runicspy.RunicMod
 api-version: '1.19'
 author: 'BoBoBalloon'
+depend:
+  - RunicCommon
+  - RunicCore
+  - RunicChat
+  - RunicDatabase
+  - RunicBank

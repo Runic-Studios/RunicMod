@@ -18,6 +18,7 @@ dependencies {
     compileOnly(project(":Projects:Core"))
     compileOnly(project(":Projects:Chat"))
     compileOnly(project(":Projects:Database"))
+    compileOnly(project(":Projects:Bank"))
 }
 
 java {

@@ -12,8 +12,29 @@ import org.jetbrains.annotations.NotNull;
 
 public final class RunicMod extends JavaPlugin {
     private static RunicMod plugin;
-    private static SpyManager spyManager;
+    private SpyManager spyManager;
     private PaperCommandManager commandManager;
+
+    @Override
+    public void onEnable() {
+        RunicMod.plugin = this;
+        this.spyManager = new SpyManager();
+        this.commandManager = new PaperCommandManager(this);
+
+        this.commandManager.getCommandConditions().addCondition("is-player", context -> {
+            if (!(context.getIssuer().getIssuer() instanceof Player)) {
+                throw new ConditionFailedException("This command cannot be run from console!");
+            }
+        });
+
+        Bukkit.getPluginManager().registerEvents(this.spyManager, this);
+        this.commandManager.registerCommand(new SpyCommand());
+    }
+
+    @Override
+    public void onDisable() {
+        // Plugin shutdown logic
+    }
 
     /**
      * A method that returns the singleton instance of the plugin
@@ -32,31 +53,10 @@ public final class RunicMod extends JavaPlugin {
     /**
      * A method that returns the spy api
      *
-     * @return
+     * @return the spy api
      */
     @NotNull
-    public static SpyAPI getSpyAPI() {
-        return spyManager;
-    }
-
-    @Override
-    public void onEnable() {
-        RunicMod.plugin = this;
-        spyManager = new SpyManager();
-        this.commandManager = new PaperCommandManager(this);
-
-        this.commandManager.getCommandConditions().addCondition("is-player", context -> {
-            if (!(context.getIssuer().getIssuer() instanceof Player)) {
-                throw new ConditionFailedException("This command cannot be run from console!");
-            }
-        });
-
-        Bukkit.getPluginManager().registerEvents(spyManager, this);
-        this.commandManager.registerCommand(new SpyCommand());
-    }
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
+    public SpyAPI getSpyAPI() {
+        return this.spyManager;
     }
 }
