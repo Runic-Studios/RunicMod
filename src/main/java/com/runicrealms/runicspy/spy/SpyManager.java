@@ -4,12 +4,16 @@ import com.runicrealms.RunicChat;
 import com.runicrealms.api.chat.ChatChannel;
 import com.runicrealms.api.event.ChatChannelMessageEvent;
 import com.runicrealms.channels.StaffChannel;
+import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.RunicCore;
 import com.runicrealms.plugin.common.util.ChatUtils;
 import com.runicrealms.plugin.common.util.ColorUtil;
+import com.runicrealms.plugin.model.BankHolder;
+import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.plugin.rdb.event.CharacterQuitEvent;
 import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
+import com.runicrealms.runicspy.ui.BankPreview;
 import com.runicrealms.runicspy.ui.InventoryPreview;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -22,6 +26,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +90,7 @@ public final class SpyManager implements SpyAPI, Listener {
             }
 
             Bukkit.getScheduler().runTask(RunicMod.getInstance(), () -> {
-                if (info.getTarget().isOnline()) {
+                if (info.getTarget().isOnline() && RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(info.getTarget().getUniqueId()) != -1) {
                     info.setCenter(target.getLocation());
                 }
 
@@ -172,6 +177,9 @@ public final class SpyManager implements SpyAPI, Listener {
         }
 
         spy.closeInventory();
+
+        BankPreview preview = new BankPreview(info.getBankPages());
+        spy.openInventory(preview.getInventory());
     }
 
     /**
@@ -199,11 +207,20 @@ public final class SpyManager implements SpyAPI, Listener {
         for (Map.Entry<UUID, SpyInfo> pair : this.spies.entrySet()) {
             SpyInfo info = pair.getValue();
 
-            if (info.getTarget().getUniqueId().equals(event.getPlayer().getUniqueId())) {
-                info.setContents(event.getPlayer().getInventory().getContents());
-                info.setArmor(event.getPlayer().getInventory().getArmorContents());
-                //set bank pages preview here
+            if (!info.getTarget().getUniqueId().equals(event.getPlayer().getUniqueId())) {
+                continue;
             }
+
+            info.setContents(event.getPlayer().getInventory().getContents());
+            info.setArmor(event.getPlayer().getInventory().getArmorContents());
+
+            BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId());
+
+            if (bank == null) {
+                continue;
+            }
+
+            info.setBankPages(bank.getRunicItemContents());
         }
     }
 
@@ -241,14 +258,28 @@ public final class SpyManager implements SpyAPI, Listener {
     private void onInventoryClick(@NotNull InventoryClickEvent event) {
         Inventory inventory = event.getClickedInventory();
 
-        if (inventory != null && inventory.getHolder() instanceof InventoryPreview) {
-            event.setCancelled(true);
+        if (inventory == null || !(inventory.getHolder() instanceof InventoryPreview || inventory.getHolder() instanceof BankPreview)) {
+            return;
+        }
+
+        event.setCancelled(true);
+
+        if (!(inventory.getHolder() instanceof BankPreview preview)) {
+            return;
+        }
+
+        if (event.getSlot() == 7) {
+            preview.lastPage();
+        } else if (event.getSlot() == 8) {
+            preview.nextPage();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     private void onInventoryDrag(@NotNull InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof InventoryPreview) {
+        InventoryHolder holder = event.getInventory().getHolder();
+
+        if (holder instanceof InventoryPreview || holder instanceof BankPreview) {
             event.setCancelled(true);
         }
     }

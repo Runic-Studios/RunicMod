@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * An inventory preview of a given user
+ *
+ * @author BoBoBalloon
  */
 public class InventoryPreview implements InventoryHolder {
     private final Inventory inventory;

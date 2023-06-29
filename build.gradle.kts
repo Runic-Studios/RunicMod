@@ -15,6 +15,7 @@ dependencies {
     compileOnly(commonLibs.acf)
     compileOnly(commonLibs.paper)
     compileOnly(project(":Projects:Common"))
+    compileOnly(project(":Projects:Items"))
     compileOnly(project(":Projects:Core"))
     compileOnly(project(":Projects:Chat"))
     compileOnly(project(":Projects:Database"))

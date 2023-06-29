@@ -1,5 +1,8 @@
 package com.runicrealms.runicspy.spy;
 
+import com.runicrealms.plugin.RunicBank;
+import com.runicrealms.plugin.model.BankHolder;
+import com.runicrealms.runicitems.item.RunicItem;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -22,7 +25,7 @@ public class SpyInfo {
     private Location center;
     private ItemStack[] contents;
     private ItemStack[] armor;
-    private Map<Integer, ItemStack[]> bankPages;
+    private Map<Integer, RunicItem[]> bankPages;
 
     public SpyInfo(@NotNull Player target, @NotNull Location origin, @NotNull BukkitTask task, @NotNull Location center) {
         this.target = target;
@@ -90,7 +93,7 @@ public class SpyInfo {
      */
     @NotNull
     public ItemStack[] getContents() {
-        return this.contents == null ? this.target.getInventory().getContents() : this.contents;
+        return this.contents == null || this.target.isOnline() ? this.target.getInventory().getContents() : this.contents;
     }
 
     /**
@@ -109,7 +112,7 @@ public class SpyInfo {
      */
     @NotNull
     public ItemStack[] getArmor() {
-        return this.armor == null ? this.target.getInventory().getArmorContents() : this.armor;
+        return this.armor == null || this.target.isOnline() ? this.target.getInventory().getArmorContents() : this.armor;
     }
 
     /**
@@ -127,9 +130,15 @@ public class SpyInfo {
      * @return the "cache" of the target's bank pages
      */
     @NotNull
-    @Deprecated //remove this tag later
-    public Map<Integer, ItemStack[]> getBankPages() {
-        throw new IllegalStateException("Not implemented yet");
+    public Map<Integer, RunicItem[]> getBankPages() {
+        BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(this.target.getUniqueId());
+
+        if (bank == null && this.bankPages == null) {
+            throw new IllegalStateException("There was an error caching the item data for " + this.target.getName() + "'s bank");
+        }
+
+        //if this.target.isOnline() is true, the bank will not return null
+        return this.bankPages == null || this.target.isOnline() ? bank.getRunicItemContents() : this.bankPages;
     }
 
     /**
@@ -137,7 +146,7 @@ public class SpyInfo {
      *
      * @param bankPages the "cache" of the target's bank pages
      */
-    public void setBankPages(@Nullable Map<Integer, ItemStack[]> bankPages) {
+    public void setBankPages(@Nullable Map<Integer, RunicItem[]> bankPages) {
         this.bankPages = bankPages;
     }
 }
