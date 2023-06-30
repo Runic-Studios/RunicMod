@@ -8,7 +8,16 @@ import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Conditions;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
+import com.runicrealms.plugin.BankManager;
+import com.runicrealms.plugin.RunicBank;
+import com.runicrealms.plugin.RunicCore;
 import com.runicrealms.plugin.common.util.ColorUtil;
+import com.runicrealms.plugin.model.BankHolder;
+import com.runicrealms.plugin.rdb.RunicDatabase;
+import com.runicrealms.runicitems.RunicItems;
+import com.runicrealms.runicitems.TemplateManager;
+import com.runicrealms.runicitems.api.ItemWriteOperation;
+import com.runicrealms.runicitems.item.template.RunicItemTemplate;
 import com.runicrealms.runicspy.api.RunicModAPI;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.spy.SpyInfo;
@@ -16,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The command that acts as an interface to the spy system
@@ -34,7 +44,8 @@ public class SpyCommand extends BaseCommand {
                 + "\t&9- /spy on <player> - &6enabled/disables spy mode on the given target\n"
                 + "\t&9- /spy stop - &6disables spy mode\n"
                 + "\t&9- /spy inventory - &6opens a preview of the target's inventory\n"
-                + "\t&9- /spy bank - &6opens a preview of the target's bank");
+                + "\t&9- /spy bank - &6opens a preview of the target's bank\n"
+                + (sender.hasPermission("runic.spy.wipe") ? "\t&9- /spy wipe <item-id> - &6wipes all items of the given ID from the target's bank and inventory" : ""));
     }
 
     @Subcommand("on")
@@ -118,11 +129,92 @@ public class SpyCommand extends BaseCommand {
             return;
         }
 
-        if (api.previewBank(player)) {
-            this.send(player, "&9Previewing " + info.getTarget().getName() + "'s bank!");
-        } else {
-            this.send(player, "&cSomeone else is already spying on this bank!");
+        api.previewBank(player);
+        this.send(player, "&9Previewing " + info.getTarget().getName() + "'s bank!");
+    }
+
+    @Subcommand("wipe")
+    @CommandCompletion("@item-ids @nothing")
+    @CommandPermission("runic.spy.wipe")
+    private void onWipe(@NotNull Player player, @NotNull String[] args) {
+        if (args.length != 1) {
+            this.onHelp(player);
+            return;
         }
+
+        SpyAPI api = RunicModAPI.getSpyAPI();
+
+        SpyInfo info = api.getInfo(player);
+
+        if (info == null) {
+            this.send(player, "&cYou are not currently in spy mode!");
+            return;
+        }
+
+        RunicItemTemplate template = TemplateManager.getTemplateFromId(args[0]);
+
+        if (template == null) {
+            this.send(player, "&cThat is an invalid item template id!");
+            return;
+        }
+
+        if (info.getTarget().isOnline()) {
+            RunicItems.getInventoryAPI().clearInventory(info.getTarget().getInventory(), template, player);
+            this.clearBankHolder(RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()), info, template, player);
+            return;
+        }
+
+
+        RunicCore.getTaskChainFactory().newChain()
+                .asyncFirst(() -> RunicBank.getAPI().loadPlayerBankData(info.getTarget().getUniqueId()))
+                .abortIfNull(BankManager.CONSOLE_LOG, player, "RunicMod failed to load bank data on onWipe()!")
+                .syncLast(playerBankData -> this.clearBankHolder(playerBankData.getBankHolder(), info, template, player))
+                .execute();
+        RunicCore.getTaskChainFactory().newChain()
+                .asyncFirst(() -> RunicItems.getDataAPI().loadInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot()))
+                .abortIfNull(BankManager.CONSOLE_LOG, player, "RunicMod failed to load inventory data on onWipe()!")
+                .syncLast(inventoryData -> {
+                    RunicDatabase.getAPI().getDataAPI().preventLogin(info.getTarget().getUniqueId());
+                    ((ItemWriteOperation) RunicItems.getDataAPI()).updateInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot(), inventoryData.getContentsMap().get(info.getCharacterSlot()), () -> {
+                    });
+                })
+                .execute();
+    }
+
+    /**
+     * A method used to clear a given item from a bank
+     *
+     * @param holder   the bank inventory holder
+     * @param info     the spy info
+     * @param template the item to be removed
+     * @param sender   the spy
+     */
+    private void clearBankHolder(@Nullable BankHolder holder, @NotNull SpyInfo info, @NotNull RunicItemTemplate template, @NotNull Player sender) {
+        if (holder == null) {
+            return;
+        }
+
+        RunicBank.getAPI().getLockedOutPlayers().add(info.getTarget().getUniqueId());
+
+        if (RunicBank.getAPI().isViewingBank(info.getTarget().getUniqueId())) {
+            info.getTarget().closeInventory();
+        }
+
+        for (int i = 0; i <= holder.getMaxPageIndex(); i++) {
+            holder.setCurrentPage(i);
+            RunicItems.getInventoryAPI().clearInventory(holder.getInventory(), template, sender);
+            holder.savePage();
+        }
+
+        RunicBank.getBankWriteOperation().updatePlayerBankData
+                (
+                        info.getTarget().getUniqueId(),
+                        holder.getRunicItemContents(),
+                        holder.getMaxPageIndex(),
+                        true,
+                        () -> {
+                        }
+                );
     }
 
     /**
@@ -132,6 +224,6 @@ public class SpyCommand extends BaseCommand {
      * @param text   the message
      */
     private void send(@NotNull CommandSender sender, @NotNull String text) {
-        sender.sendMessage(ColorUtil.format("&r&d[&5Runic&2Spy&d] > &r" + text));
+        sender.sendMessage(ColorUtil.format("&r&d[&5Runic&2Spy&d] » &r" + text));
     }
 }

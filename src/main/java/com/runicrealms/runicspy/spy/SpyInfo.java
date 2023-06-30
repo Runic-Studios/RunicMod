@@ -2,6 +2,7 @@ package com.runicrealms.runicspy.spy;
 
 import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.model.BankHolder;
+import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.runicitems.item.RunicItem;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -22,6 +23,7 @@ public class SpyInfo {
     private final Player target;
     private final Location origin;
     private final BukkitTask task;
+    private final int characterSlot;
     private Location center;
     private ItemStack[] contents;
     private ItemStack[] armor;
@@ -31,6 +33,7 @@ public class SpyInfo {
         this.target = target;
         this.origin = origin;
         this.task = task;
+        this.characterSlot = RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(target.getUniqueId());
         this.center = center;
         this.contents = null;
         this.armor = null;
@@ -65,6 +68,15 @@ public class SpyInfo {
     @NotNull
     public BukkitTask getTask() {
         return this.task;
+    }
+
+    /**
+     * A method that returns the selected character slot of the player being spied on
+     *
+     * @return the selected character slot of the player being spied on
+     */
+    public int getCharacterSlot() {
+        return this.characterSlot;
     }
 
     /**

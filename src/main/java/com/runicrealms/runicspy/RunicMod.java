@@ -2,6 +2,7 @@ package com.runicrealms.runicspy;
 
 import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.PaperCommandManager;
+import com.runicrealms.runicitems.TemplateManager;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.command.SpyCommand;
 import com.runicrealms.runicspy.spy.SpyManager;
@@ -10,6 +11,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
 
 public final class RunicMod extends JavaPlugin {
     private static RunicMod plugin;
@@ -26,6 +29,11 @@ public final class RunicMod extends JavaPlugin {
             if (!(context.getIssuer().getIssuer() instanceof Player)) {
                 throw new ConditionFailedException("This command cannot be run from console!");
             }
+        });
+
+        this.commandManager.getCommandCompletions().registerAsyncCompletion("item-ids", context -> {
+            if (!context.getSender().isOp()) return new HashSet<>();
+            return TemplateManager.getTemplates().keySet();
         });
 
         Bukkit.getPluginManager().registerEvents(this.spyManager, this);

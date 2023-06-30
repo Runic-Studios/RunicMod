@@ -11,7 +11,7 @@ import com.runicrealms.plugin.common.util.ChatUtils;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
-import com.runicrealms.plugin.rdb.event.CharacterQuitEvent;
+import com.runicrealms.plugin.rdb.event.CharacterHasQuitEvent;
 import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.ui.preview.BankPreview;
@@ -164,14 +164,13 @@ public final class SpyManager implements SpyAPI, Listener {
      * A method that starts a preview on the targeter user's bank
      *
      * @param spy the spy looking to preview their target's bank
-     * @return if the operation was a success
      */
     @Override
-    public boolean previewBank(@NotNull Player spy) {
+    public void previewBank(@NotNull Player spy) {
         SpyInfo info = this.spies.get(spy.getUniqueId());
 
-        if (info == null || this.isBankBeingSpiedOn(info.getTarget())) {
-            return false;
+        if (info == null) {
+            return;
         }
 
         if (RunicBank.getAPI().isViewingBank(info.getTarget().getUniqueId())) {
@@ -180,9 +179,8 @@ public final class SpyManager implements SpyAPI, Listener {
 
         spy.closeInventory();
 
-        BankPreview preview = new BankPreview(info.getTarget(), info.getBankPages());
+        BankPreview preview = new BankPreview(info.getBankPages());
         spy.openInventory(preview.getInventory());
-        return true;
     }
 
     /**
@@ -203,24 +201,8 @@ public final class SpyManager implements SpyAPI, Listener {
         return optional.get();
     }
 
-    /**
-     * A method used to check if the target's bank is already being spied on
-     *
-     * @param target the target player
-     * @return if the target's bank is already being spied on
-     */
-    private boolean isBankBeingSpiedOn(@NotNull Player target) {
-        for (Map.Entry<UUID, SpyInfo> entry : this.spies.entrySet()) {
-            if (entry.getValue().getTarget().getUniqueId().equals(target.getUniqueId()) && Bukkit.getPlayer(entry.getKey()).getOpenInventory().getTopInventory().getHolder() instanceof BankPreview) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     @EventHandler
-    private void onCharacterLeave(@NotNull CharacterQuitEvent event) {
+    private void onCharacterLeave(@NotNull CharacterHasQuitEvent event) {
         this.removeSpy(event.getPlayer()); //remove spy if they exist
 
         for (Map.Entry<UUID, SpyInfo> pair : this.spies.entrySet()) {
@@ -236,7 +218,7 @@ public final class SpyManager implements SpyAPI, Listener {
             BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId());
 
             if (bank == null) {
-                continue;
+                throw new IllegalStateException("Player is already removed from bank cache!");
             }
 
             info.setBankPages(bank.getRunicItemContents());
@@ -275,8 +257,11 @@ public final class SpyManager implements SpyAPI, Listener {
 
     @EventHandler(ignoreCancelled = true)
     private void onBankOpen(@NotNull BankOpenEvent event) {
-        if (this.isBankBeingSpiedOn(event.getPlayer())) {
-            event.setCancelled(true);
+        for (Map.Entry<UUID, SpyInfo> entry : this.spies.entrySet()) {
+            if (entry.getValue().getTarget().getUniqueId().equals(entry.getValue().getTarget().getUniqueId()) && Bukkit.getPlayer(entry.getKey()).getOpenInventory().getTopInventory().getHolder() instanceof BankPreview) {
+                event.setCancelled(true);
+                return;
+            }
         }
     }
 }

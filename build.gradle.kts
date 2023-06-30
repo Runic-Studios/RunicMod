@@ -14,6 +14,7 @@ dependencies {
     compileOnly(commonLibs.spigot)
     compileOnly(commonLibs.acf)
     compileOnly(commonLibs.paper)
+    compileOnly(commonLibs.taskchain)
     compileOnly(project(":Projects:Common"))
     compileOnly(project(":Projects:Items"))
     compileOnly(project(":Projects:Core"))

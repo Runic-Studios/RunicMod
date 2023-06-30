@@ -34,31 +34,8 @@ public class InventoryPreview extends RunicModUI {
     @Override
     public void reload() {
         for (int i = 0; i < this.getInventory().getSize(); i++) {
-            int index = i; //cant use changing variables in lambda
-
             if (i > 18) {
                 this.getInventory().setItem(i + 18, this.contents[i]);
-                this.registerClickEvent(i + 18, (player, stack) -> {
-                    if ((index == 36 || index == 43 || index == 44) || (!player.isOp() && !player.hasPermission("runic.spy.edit") && (this.target == null || !this.target.isOnline()))) {
-                        return;
-                    }
-
-                    ItemStack clicked = this.getInventory().getItem(index);
-
-                    if (clicked == null && player.getItemOnCursor().getAmount() == 0) {
-                        return;
-                    }
-
-                    if (player.getItemOnCursor().getAmount() != 0) { //if item should be placed
-                        this.getInventory().setItem(index + 18, player.getItemOnCursor());
-                        this.target.getInventory().setItem(index, player.getItemOnCursor());
-                        player.setItemOnCursor(null);
-                    } else { //if item should be taken
-                        this.getInventory().setItem(index + 18, null);
-                        this.target.getInventory().setItem(index, null);
-                        player.setItemOnCursor(clicked);
-                    }
-                });
                 continue;
             }
 
@@ -72,31 +49,6 @@ public class InventoryPreview extends RunicModUI {
             }
 
             this.getInventory().setItem(i, this.armor[i]);
-            this.registerClickEvent(i, (player, stack) -> {
-                if (!player.isOp() && !player.hasPermission("runic.spy.edit") && (this.target == null || !this.target.isOnline())) {
-                    return;
-                }
-
-                ItemStack clicked = this.getInventory().getItem(index);
-
-                if (clicked == null && player.getItemOnCursor().getAmount() == 0) {
-                    return;
-                }
-
-                if (player.getItemOnCursor().getAmount() != 0) { //if item should be placed
-                    this.getInventory().setItem(index, player.getItemOnCursor());
-                    ItemStack[] armor = this.target.getInventory().getArmorContents();
-                    armor[index] = null;
-                    this.target.getInventory().setArmorContents(armor);
-                    player.setItemOnCursor(null);
-                } else { //if item should be taken
-                    this.getInventory().setItem(index, null);
-                    ItemStack[] armor = this.target.getInventory().getArmorContents();
-                    armor[index] = null;
-                    this.target.getInventory().setArmorContents(armor);
-                    player.setItemOnCursor(clicked);
-                }
-            });
         }
     }
 }
