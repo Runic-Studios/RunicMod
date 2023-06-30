@@ -14,21 +14,16 @@ import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.plugin.rdb.event.CharacterQuitEvent;
 import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
-import com.runicrealms.runicspy.ui.BankPreview;
-import com.runicrealms.runicspy.ui.InventoryPreview;
-import com.runicrealms.runicspy.ui.RunicModUI;
+import com.runicrealms.runicspy.ui.preview.BankPreview;
+import com.runicrealms.runicspy.ui.preview.InventoryPreview;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
 /**
  * A class that manages all mods in spy mode
@@ -276,41 +270,6 @@ public final class SpyManager implements SpyAPI, Listener {
         if (this.spies.containsKey(event.getPlayer().getUniqueId()) && !event.getMessage().startsWith("/spy") && !event.getMessage().startsWith("/whois")) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ColorUtil.format("&r&cYou can only execute the spy and whois command while in spy mode!"));
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    private void onInventoryClick(@NotNull InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof RunicModUI modUI)) {
-            return;
-        }
-
-        Inventory inventory = event.getClickedInventory();
-
-        if (inventory == null && modUI.getDestroyItemsOnEdge()) {
-            event.getWhoClicked().setItemOnCursor(null);
-            return;
-        }
-
-        if (inventory == null || !(inventory.getHolder() instanceof RunicModUI)) {
-            return;
-        }
-
-        event.setCancelled(true);
-
-        BiConsumer<Player, ItemStack> action = modUI.getClickAction(event.getSlot());
-
-        if (action == null) {
-            return;
-        }
-
-        action.accept((Player) event.getWhoClicked(), event.getCurrentItem());
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    private void onInventoryDrag(@NotNull InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof RunicModUI) {
-            event.setCancelled(true);
         }
     }
 

@@ -1,5 +1,6 @@
-package com.runicrealms.runicspy.ui;
+package com.runicrealms.runicspy.ui.preview;
 
+import com.runicrealms.runicspy.ui.RunicModUI;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;

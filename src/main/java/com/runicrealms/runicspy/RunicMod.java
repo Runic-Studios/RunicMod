@@ -5,6 +5,7 @@ import co.aikar.commands.PaperCommandManager;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.command.SpyCommand;
 import com.runicrealms.runicspy.spy.SpyManager;
+import com.runicrealms.runicspy.ui.RunicModUIListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,6 +29,7 @@ public final class RunicMod extends JavaPlugin {
         });
 
         Bukkit.getPluginManager().registerEvents(this.spyManager, this);
+        Bukkit.getPluginManager().registerEvents(new RunicModUIListener(), this);
         this.commandManager.registerCommand(new SpyCommand());
     }
 

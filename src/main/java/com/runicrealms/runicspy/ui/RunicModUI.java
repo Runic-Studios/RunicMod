@@ -89,6 +89,13 @@ public abstract class RunicModUI implements InventoryHolder {
     public abstract void reload();
 
     /**
+     * A method called when the inventory is closed
+     */
+    public void onClose() {
+
+    }
+
+    /**
      * A method that returns a new instance of a blank itemstack icon
      *
      * @return a new instance of a blank itemstack icon

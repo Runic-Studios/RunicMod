@@ -1,7 +1,10 @@
-package com.runicrealms.runicspy.ui;
+package com.runicrealms.runicspy.ui.preview;
 
+import com.runicrealms.plugin.RunicBank;
+import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.util.BankUtil;
 import com.runicrealms.runicitems.item.RunicItem;
+import com.runicrealms.runicspy.ui.RunicModUI;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -89,12 +92,18 @@ public class BankPreview extends RunicModUI {
         this.registerClickEvent(8, (player, stack) -> this.nextPage());
     }
 
+    @Override
+    public void onClose() {
+        this.updateHolder();
+    }
+
     /**
      * A method that sets this bank preview to the next page
      */
     public void nextPage() {
         if (this.pages.containsKey(this.currentPage + 1)) {
             this.currentPage++;
+            this.updateHolder();
             this.reload();
         }
     }
@@ -105,7 +114,36 @@ public class BankPreview extends RunicModUI {
     public void lastPage() {
         if (this.pages.containsKey(this.currentPage - 1)) {
             this.currentPage--;
+            this.updateHolder();
             this.reload();
         }
+    }
+
+    /**
+     * Sets the underlying {@link BankHolder} inventory in local memory to match this preview
+     */
+    public void updateHolder() {
+        if (this.target == null) {
+            return;
+        }
+
+        if (!this.target.isOnline()) {
+            //RunicBank.getBankWriteOperation().updatePlayerBankData();
+            return;
+        }
+
+        BankHolder holder = RunicBank.getAPI().getBankHolderMap().get(this.target.getUniqueId());
+
+        if (holder == null) {
+            throw new IllegalStateException("Player " + this.target.getName() + " is online but has no bank loaded in local memory!?");
+        }
+
+        int currentPage = holder.getCurrentPage();
+
+        holder.setCurrentPage(this.currentPage);
+        holder.setInventoryContents(this.pages.get(this.currentPage));
+        holder.savePage();
+
+        holder.setCurrentPage(currentPage);
     }
 }
