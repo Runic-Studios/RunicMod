@@ -118,8 +118,11 @@ public class SpyCommand extends BaseCommand {
             return;
         }
 
-        api.previewBank(player);
-        this.send(player, "&9Previewing " + info.getTarget().getName() + "'s bank!");
+        if (api.previewBank(player)) {
+            this.send(player, "&9Previewing " + info.getTarget().getName() + "'s bank!");
+        } else {
+            this.send(player, "&cSomeone else is already spying on this bank!");
+        }
     }
 
     /**

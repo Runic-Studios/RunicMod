@@ -47,6 +47,7 @@ public interface SpyAPI {
      * A method that starts a preview on the targeter user's bank
      *
      * @param spy the spy looking to preview their target's bank
+     * @return if the operation was a success
      */
-    void previewBank(@NotNull Player spy);
+    boolean previewBank(@NotNull Player spy);
 }

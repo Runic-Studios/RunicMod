@@ -1,15 +1,12 @@
 package com.runicrealms.runicspy.ui;
 
-import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.util.BankUtil;
 import com.runicrealms.runicitems.item.RunicItem;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,15 +18,14 @@ import java.util.Map;
  * @author BoBoBalloon
  * @since 6/29/23
  */
-public class BankPreview implements InventoryHolder {
-    private final Inventory inventory;
+public class BankPreview extends RunicModUI {
+    private final Player target;
     private final Map<Integer, ItemStack[]> pages;
     private int currentPage;
 
-    private static final ItemStack BLANK = BankPreview.blank();
-
-    public BankPreview(@NotNull Map<Integer, RunicItem[]> pages) {
-        this.inventory = Bukkit.createInventory(this, 6 * 9, ColorUtil.format("&r&d[&5Runic&2Spy&d] > &2Bank Preview"));
+    public BankPreview(@Nullable Player target, @NotNull Map<Integer, RunicItem[]> pages) {
+        super("&r&d[&5Runic&2Spy&d] > &2Bank Preview", 54, true);
+        this.target = target;
         this.pages = new HashMap<>();
 
         for (Map.Entry<Integer, RunicItem[]> entry : pages.entrySet()) {
@@ -41,33 +37,56 @@ public class BankPreview implements InventoryHolder {
         this.reload();
     }
 
-    @NotNull
-    @Override
-    public Inventory getInventory() {
-        return this.inventory;
-    }
-
     /**
      * A method that sets the content of this inventory
      */
+    @Override
     public void reload() {
         if (!this.pages.containsKey(this.currentPage)) {
             this.currentPage = 0;
         }
 
-        this.inventory.setContents(this.pages.get(this.currentPage));
+        this.getInventory().setContents(this.pages.get(this.currentPage));
+
+        for (int i = 9; i < this.getInventory().getSize(); i++) {
+            int index = i; //can't use a changing variable in a lambda
+
+            this.registerClickEvent(i, (player, stack) -> {
+                if (!player.isOp() && !player.hasPermission("runic.spy.edit") && (this.target == null || !this.target.isOnline())) {
+                    return;
+                }
+
+                ItemStack clicked = this.getInventory().getItem(index);
+
+                if (clicked == null && player.getItemOnCursor().getAmount() == 0) {
+                    return;
+                }
+
+                if (player.getItemOnCursor().getAmount() != 0) { //if item should be placed
+                    this.getInventory().setItem(index, player.getItemOnCursor());
+                    //edit bank data so that item on cursor is set to the index
+                    player.setItemOnCursor(null);
+                } else { //if item should be taken
+                    this.getInventory().setItem(index, null);
+                    //edit bank data so that index is set to null/air
+                    player.setItemOnCursor(clicked);
+                }
+            });
+        }
 
         // fill top row with black panes
         for (int i = 0; i < 4; i++) {
-            this.inventory.setItem(i, BankPreview.BLANK);
+            this.getInventory().setItem(i, RunicModUI.BLANK);
         }
-        this.inventory.setItem(5, BankPreview.BLANK);
+        this.getInventory().setItem(5, RunicModUI.BLANK);
 
         // menu buttons
-        this.inventory.setItem(4, BankUtil.menuItem(Material.YELLOW_STAINED_GLASS_PANE, "&6&lBank of Alterra", "&7Welcome to your bank\n&aPage: &f" + (this.currentPage + 1)));
-        this.inventory.setItem(6, BankUtil.menuItem(Material.BARRIER, "&c&lYou may not purchase bank pages in a preview!", ""));
-        this.inventory.setItem(7, BankUtil.menuItem(Material.GREEN_STAINED_GLASS_PANE, "&f&lPrevious Page", "&7Display the previous page in your bank"));
-        this.inventory.setItem(8, BankUtil.menuItem(Material.RED_STAINED_GLASS_PANE, "&f&lNext Page", "&7Display the next page in your bank"));
+        this.getInventory().setItem(4, BankUtil.menuItem(Material.YELLOW_STAINED_GLASS_PANE, "&6&lBank of Alterra", "&7Welcome to your bank\n&aPage: &f" + (this.currentPage + 1)));
+        this.getInventory().setItem(6, BankUtil.menuItem(Material.BARRIER, "&c&lYou may not purchase bank pages in a preview!", ""));
+        this.getInventory().setItem(7, BankUtil.menuItem(Material.GREEN_STAINED_GLASS_PANE, "&f&lPrevious Page", "&7Display the previous page in your bank"));
+        this.registerClickEvent(7, (player, stack) -> this.lastPage());
+        this.getInventory().setItem(8, BankUtil.menuItem(Material.RED_STAINED_GLASS_PANE, "&f&lNext Page", "&7Display the next page in your bank"));
+        this.registerClickEvent(8, (player, stack) -> this.nextPage());
     }
 
     /**
@@ -88,20 +107,5 @@ public class BankPreview implements InventoryHolder {
             this.currentPage--;
             this.reload();
         }
-    }
-
-    /**
-     * A method that returns a new instance of a blank itemstack icon
-     *
-     * @return a new instance of a blank itemstack icon
-     */
-    @NotNull
-    private static ItemStack blank() {
-        ItemStack blank = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta meta = blank.getItemMeta();
-        meta.setDisplayName("");
-        blank.setItemMeta(meta);
-
-        return blank;
     }
 }

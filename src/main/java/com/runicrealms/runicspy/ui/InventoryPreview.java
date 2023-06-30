@@ -1,56 +1,68 @@
 package com.runicrealms.runicspy.ui;
 
-import com.runicrealms.plugin.common.util.ColorUtil;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An inventory preview of a given user
  *
  * @author BoBoBalloon
  */
-public class InventoryPreview implements InventoryHolder {
-    private final Inventory inventory;
+public class InventoryPreview extends RunicModUI {
+    private final Player target;
     private final ItemStack[] contents;
     private final ItemStack[] armor;
 
-    private static final ItemStack BLANK = InventoryPreview.blank();
-
-    public InventoryPreview(@NotNull ItemStack[] contents, @NotNull ItemStack[] armor) {
-        this.inventory = Bukkit.createInventory(this, 6 * 9, ColorUtil.format("&r&d[&5Runic&2Spy&d] > &2Inventory Preview"));
+    public InventoryPreview(@Nullable Player target, @NotNull ItemStack[] contents, @NotNull ItemStack[] armor) {
+        super("&r&d[&5Runic&2Spy&d] > &2Inventory Preview", 54);
+        this.target = target;
         this.contents = contents;
         this.armor = armor;
         this.reload();
     }
 
     public InventoryPreview(@NotNull Player target) {
-        this(target.getInventory().getContents(), target.getInventory().getArmorContents());
-    }
-
-    @NotNull
-    @Override
-    public Inventory getInventory() {
-        return this.inventory;
+        this(target, target.getInventory().getContents(), target.getInventory().getArmorContents());
     }
 
     /**
      * A method that sets the content of this inventory
      */
+    @Override
     public void reload() {
-        for (int i = 0; i < this.inventory.getSize(); i++) {
+        for (int i = 0; i < this.getInventory().getSize(); i++) {
+            int index = i; //cant use changing variables in lambda
+
             if (i > 18) {
-                this.inventory.setItem(i + 18, this.contents[i]);
+                this.getInventory().setItem(i + 18, this.contents[i]);
+                this.registerClickEvent(i + 18, (player, stack) -> {
+                    if ((index == 36 || index == 43 || index == 44) || (!player.isOp() && !player.hasPermission("runic.spy.edit") && (this.target == null || !this.target.isOnline()))) {
+                        return;
+                    }
+
+                    ItemStack clicked = this.getInventory().getItem(index);
+
+                    if (clicked == null && player.getItemOnCursor().getAmount() == 0) {
+                        return;
+                    }
+
+                    if (player.getItemOnCursor().getAmount() != 0) { //if item should be placed
+                        this.getInventory().setItem(index + 18, player.getItemOnCursor());
+                        this.target.getInventory().setItem(index, player.getItemOnCursor());
+                        player.setItemOnCursor(null);
+                    } else { //if item should be taken
+                        this.getInventory().setItem(index + 18, null);
+                        this.target.getInventory().setItem(index, null);
+                        player.setItemOnCursor(clicked);
+                    }
+                });
                 continue;
             }
 
             if (i > 8) {
-                this.inventory.setItem(i, InventoryPreview.BLANK);
+                this.getInventory().setItem(i, InventoryPreview.BLANK);
                 continue;
             }
 
@@ -58,22 +70,32 @@ public class InventoryPreview implements InventoryHolder {
                 continue;
             }
 
-            this.inventory.setItem(i, this.armor[i]);
+            this.getInventory().setItem(i, this.armor[i]);
+            this.registerClickEvent(i, (player, stack) -> {
+                if (!player.isOp() && !player.hasPermission("runic.spy.edit") && (this.target == null || !this.target.isOnline())) {
+                    return;
+                }
+
+                ItemStack clicked = this.getInventory().getItem(index);
+
+                if (clicked == null && player.getItemOnCursor().getAmount() == 0) {
+                    return;
+                }
+
+                if (player.getItemOnCursor().getAmount() != 0) { //if item should be placed
+                    this.getInventory().setItem(index, player.getItemOnCursor());
+                    ItemStack[] armor = this.target.getInventory().getArmorContents();
+                    armor[index] = null;
+                    this.target.getInventory().setArmorContents(armor);
+                    player.setItemOnCursor(null);
+                } else { //if item should be taken
+                    this.getInventory().setItem(index, null);
+                    ItemStack[] armor = this.target.getInventory().getArmorContents();
+                    armor[index] = null;
+                    this.target.getInventory().setArmorContents(armor);
+                    player.setItemOnCursor(clicked);
+                }
+            });
         }
-    }
-
-    /**
-     * A method that returns a new instance of a blank itemstack icon
-     *
-     * @return a new instance of a blank itemstack icon
-     */
-    @NotNull
-    private static ItemStack blank() {
-        ItemStack blank = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta meta = blank.getItemMeta();
-        meta.setDisplayName("");
-        blank.setItemMeta(meta);
-
-        return blank;
     }
 }

@@ -6,6 +6,7 @@ import com.runicrealms.api.event.ChatChannelMessageEvent;
 import com.runicrealms.channels.StaffChannel;
 import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.RunicCore;
+import com.runicrealms.plugin.api.event.BankOpenEvent;
 import com.runicrealms.plugin.common.util.ChatUtils;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
@@ -15,6 +16,7 @@ import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.ui.BankPreview;
 import com.runicrealms.runicspy.ui.InventoryPreview;
+import com.runicrealms.runicspy.ui.RunicModUI;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -26,7 +28,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 /**
  * A class that manages all mods in spy mode
@@ -159,7 +162,7 @@ public final class SpyManager implements SpyAPI, Listener {
 
         spy.closeInventory();
 
-        InventoryPreview preview = new InventoryPreview(info.getContents(), info.getArmor());
+        InventoryPreview preview = new InventoryPreview(info.getTarget(), info.getContents(), info.getArmor());
         spy.openInventory(preview.getInventory());
     }
 
@@ -167,19 +170,25 @@ public final class SpyManager implements SpyAPI, Listener {
      * A method that starts a preview on the targeter user's bank
      *
      * @param spy the spy looking to preview their target's bank
+     * @return if the operation was a success
      */
     @Override
-    public void previewBank(@NotNull Player spy) {
+    public boolean previewBank(@NotNull Player spy) {
         SpyInfo info = this.spies.get(spy.getUniqueId());
 
-        if (info == null) {
-            return;
+        if (info == null || this.isBankBeingSpiedOn(info.getTarget())) {
+            return false;
+        }
+
+        if (RunicBank.getAPI().isViewingBank(info.getTarget().getUniqueId())) {
+            info.getTarget().closeInventory();
         }
 
         spy.closeInventory();
 
-        BankPreview preview = new BankPreview(info.getBankPages());
+        BankPreview preview = new BankPreview(info.getTarget(), info.getBankPages());
         spy.openInventory(preview.getInventory());
+        return true;
     }
 
     /**
@@ -198,6 +207,22 @@ public final class SpyManager implements SpyAPI, Listener {
         }
 
         return optional.get();
+    }
+
+    /**
+     * A method used to check if the target's bank is already being spied on
+     *
+     * @param target the target player
+     * @return if the target's bank is already being spied on
+     */
+    private boolean isBankBeingSpiedOn(@NotNull Player target) {
+        for (Map.Entry<UUID, SpyInfo> entry : this.spies.entrySet()) {
+            if (entry.getValue().getTarget().getUniqueId().equals(target.getUniqueId()) && Bukkit.getPlayer(entry.getKey()).getOpenInventory().getTopInventory().getHolder() instanceof BankPreview) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @EventHandler
@@ -256,30 +281,42 @@ public final class SpyManager implements SpyAPI, Listener {
 
     @EventHandler(ignoreCancelled = true)
     private void onInventoryClick(@NotNull InventoryClickEvent event) {
+        if (!(event.getView().getTopInventory().getHolder() instanceof RunicModUI modUI)) {
+            return;
+        }
+
         Inventory inventory = event.getClickedInventory();
 
-        if (inventory == null || !(inventory.getHolder() instanceof InventoryPreview || inventory.getHolder() instanceof BankPreview)) {
+        if (inventory == null && modUI.getDestroyItemsOnEdge()) {
+            event.getWhoClicked().setItemOnCursor(null);
+            return;
+        }
+
+        if (inventory == null || !(inventory.getHolder() instanceof RunicModUI)) {
             return;
         }
 
         event.setCancelled(true);
 
-        if (!(inventory.getHolder() instanceof BankPreview preview)) {
+        BiConsumer<Player, ItemStack> action = modUI.getClickAction(event.getSlot());
+
+        if (action == null) {
             return;
         }
 
-        if (event.getSlot() == 7) {
-            preview.lastPage();
-        } else if (event.getSlot() == 8) {
-            preview.nextPage();
-        }
+        action.accept((Player) event.getWhoClicked(), event.getCurrentItem());
     }
 
     @EventHandler(ignoreCancelled = true)
     private void onInventoryDrag(@NotNull InventoryDragEvent event) {
-        InventoryHolder holder = event.getInventory().getHolder();
+        if (event.getInventory().getHolder() instanceof RunicModUI) {
+            event.setCancelled(true);
+        }
+    }
 
-        if (holder instanceof InventoryPreview || holder instanceof BankPreview) {
+    @EventHandler(ignoreCancelled = true)
+    private void onBankOpen(@NotNull BankOpenEvent event) {
+        if (this.isBankBeingSpiedOn(event.getPlayer())) {
             event.setCancelled(true);
         }
     }
