@@ -156,7 +156,7 @@ public final class SpyManager implements SpyAPI, Listener {
 
         spy.closeInventory();
 
-        InventoryPreview preview = new InventoryPreview(info.getTarget(), info.getContents(), info.getArmor());
+        InventoryPreview preview = new InventoryPreview(info.getContents(), info.getArmor());
         spy.openInventory(preview.getInventory());
     }
 
@@ -229,6 +229,24 @@ public final class SpyManager implements SpyAPI, Listener {
     private void onPlayerTeleport(@NotNull PlayerTeleportEvent event) {
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.SPECTATE && this.spies.containsKey(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
+        }
+
+        if (event.getTo() == null) {
+            return;
+        }
+
+        for (Map.Entry<UUID, SpyInfo> entry : this.spies.entrySet()) {
+            if (!entry.getValue().getTarget().getUniqueId().equals(event.getPlayer().getUniqueId())) {
+                continue;
+            }
+
+            Player spy = Bukkit.getPlayer(entry.getKey());
+
+            if (spy == null) {
+                continue;
+            }
+
+            spy.teleport(event.getTo(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         }
     }
 

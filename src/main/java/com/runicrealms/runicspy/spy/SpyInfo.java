@@ -103,7 +103,7 @@ public class SpyInfo {
      *
      * @return the inventory associated with this player
      */
-    @NotNull
+    @Nullable
     public ItemStack[] getContents() {
         return this.contents == null || this.target.isOnline() ? this.target.getInventory().getContents() : this.contents;
     }
@@ -122,7 +122,7 @@ public class SpyInfo {
      *
      * @return the "cache" of armor contents
      */
-    @NotNull
+    @Nullable
     public ItemStack[] getArmor() {
         return this.armor == null || this.target.isOnline() ? this.target.getInventory().getArmorContents() : this.armor;
     }

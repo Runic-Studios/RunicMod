@@ -14,9 +14,11 @@ import com.runicrealms.plugin.RunicCore;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
+import com.runicrealms.runicitems.ItemManager;
 import com.runicrealms.runicitems.RunicItems;
 import com.runicrealms.runicitems.TemplateManager;
 import com.runicrealms.runicitems.api.ItemWriteOperation;
+import com.runicrealms.runicitems.item.RunicItem;
 import com.runicrealms.runicitems.item.template.RunicItemTemplate;
 import com.runicrealms.runicspy.api.RunicModAPI;
 import com.runicrealms.runicspy.api.SpyAPI;
@@ -179,6 +181,39 @@ public class SpyCommand extends BaseCommand {
                     });
                 })
                 .execute();
+
+        //make memory in SpyInfo match changes
+        for (int i = 0; i < info.getArmor().length; i++) {
+            RunicItem item = ItemManager.getRunicItemFromItemStack(info.getArmor()[i]);
+
+            if (item == null || !item.getTemplateId().equals(template.getId())) {
+                continue;
+            }
+
+            info.getArmor()[i] = null;
+        }
+
+        for (int i = 0; i < info.getContents().length; i++) {
+            RunicItem item = ItemManager.getRunicItemFromItemStack(info.getContents()[i]);
+
+            if (item == null || !item.getTemplateId().equals(template.getId())) {
+                continue;
+            }
+
+            info.getContents()[i] = null;
+        }
+
+        for (RunicItem[] page : info.getBankPages().values()) {
+            for (int i = 0; i < page.length; i++) {
+                RunicItem item = page[i];
+
+                if (item == null || !item.getTemplateId().equals(template.getId())) {
+                    continue;
+                }
+
+                page[i] = null;
+            }
+        }
     }
 
     /**

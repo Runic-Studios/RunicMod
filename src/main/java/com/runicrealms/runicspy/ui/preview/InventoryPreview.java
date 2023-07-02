@@ -12,20 +12,18 @@ import org.jetbrains.annotations.Nullable;
  * @author BoBoBalloon
  */
 public class InventoryPreview extends RunicModUI {
-    private final Player target;
     private final ItemStack[] contents;
     private final ItemStack[] armor;
 
-    public InventoryPreview(@Nullable Player target, @NotNull ItemStack[] contents, @NotNull ItemStack[] armor) {
+    public InventoryPreview(@Nullable ItemStack[] contents, @Nullable ItemStack[] armor) {
         super("&r&d[&5Runic&2Spy&d] > &2Inventory Preview", 54);
-        this.target = target;
         this.contents = contents;
         this.armor = armor;
         this.reload();
     }
 
     public InventoryPreview(@NotNull Player target) {
-        this(target, target.getInventory().getContents(), target.getInventory().getArmorContents());
+        this(target.getInventory().getContents(), target.getInventory().getArmorContents());
     }
 
     /**
