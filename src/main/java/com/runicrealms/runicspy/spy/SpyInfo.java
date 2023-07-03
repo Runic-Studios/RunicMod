@@ -29,12 +29,12 @@ public class SpyInfo {
     private ItemStack[] armor;
     private Map<Integer, RunicItem[]> bankPages;
 
-    public SpyInfo(@NotNull Player target, @NotNull Location origin, @NotNull BukkitTask task, @NotNull Location center) {
+    public SpyInfo(@NotNull Player target, @NotNull Location origin, @NotNull BukkitTask task) {
         this.target = target;
         this.origin = origin;
         this.task = task;
         this.characterSlot = RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(target.getUniqueId());
-        this.center = center;
+        this.center = target.getLocation();
         this.contents = null;
         this.armor = null;
         this.bankPages = null;
@@ -141,12 +141,12 @@ public class SpyInfo {
      *
      * @return the "cache" of the target's bank pages
      */
-    @NotNull
+    @Nullable
     public Map<Integer, RunicItem[]> getBankPages() {
         BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(this.target.getUniqueId());
 
         if (bank == null && this.bankPages == null) {
-            throw new IllegalStateException("There was an error caching the item data for " + this.target.getName() + "'s bank");
+            return null;
         }
 
         //if this.target.isOnline() is true, the bank will not return null

@@ -33,7 +33,7 @@ public class InventoryPreview extends RunicModUI {
     public void reload() {
         for (int i = 0; i < this.getInventory().getSize(); i++) {
             if (i > 18) {
-                this.getInventory().setItem(i + 18, this.contents[i]);
+                this.getInventory().setItem(i, this.contents[i]);
                 continue;
             }
 

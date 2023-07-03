@@ -12,17 +12,22 @@ import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.plugin.rdb.event.CharacterHasQuitEvent;
+import com.runicrealms.runicitems.item.RunicItem;
 import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.ui.preview.BankPreview;
 import com.runicrealms.runicspy.ui.preview.InventoryPreview;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +96,7 @@ public final class SpyManager implements SpyAPI, Listener {
                     info.setCenter(target.getLocation());
                 }
 
-                if (info.getCenter().distance(spy.getLocation()) >= 200) {
+                if (info.getCenter().distance(spy.getLocation()) >= 50) {
                     spy.teleport(info.getCenter(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                 }
             });
@@ -103,17 +108,18 @@ public final class SpyManager implements SpyAPI, Listener {
 
         RunicChat.getRunicChatAPI().setWhisperSpy(spy, target, true);
 
-        spy.setGameMode(GameMode.SPECTATOR);
-        spy.teleport(target.getLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        spy.setFlying(true);
 
-        this.spies.put(spy.getUniqueId(), new SpyInfo(target, spy.getLocation(), task, target.getLocation()));
+        this.spies.put(spy.getUniqueId(), new SpyInfo(target, spy.getLocation(), task));
+
+        spy.teleport(target.getLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
 
         ChatChannel staffChannel = this.getStaffChannel();
 
         RunicChat.getRunicChatAPI().setPlayerChatChannel(spy, staffChannel);
 
         for (Player player : staffChannel.getRecipients(spy)) {
-            ChatUtils.sendCenteredMessage(player, "&r&9&l" + spy.getName() + " is spying on " + target.getName());
+            ChatUtils.sendCenteredMessage(player, ColorUtil.format("&r&9&l" + spy.getName() + " is spying on " + target.getName()));
         }
     }
 
@@ -136,7 +142,7 @@ public final class SpyManager implements SpyAPI, Listener {
             RunicCore.getVanishAPI().showPlayer(spy);
         }
 
-        spy.setGameMode(GameMode.ADVENTURE);
+        spy.setFlying(false);
         spy.teleport(info.getOrigin(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         RunicChat.getRunicChatAPI().setWhisperSpy(spy, info.getTarget(), false);
     }
@@ -179,7 +185,14 @@ public final class SpyManager implements SpyAPI, Listener {
 
         spy.closeInventory();
 
-        BankPreview preview = new BankPreview(info.getBankPages());
+        Map<Integer, RunicItem[]> bankPages = info.getBankPages();
+
+        if (bankPages == null) {
+            spy.sendMessage(ColorUtil.format("&cThe player does not have a bank loaded!"));
+            return;
+        }
+
+        BankPreview preview = new BankPreview(bankPages);
         spy.openInventory(preview.getInventory());
     }
 
@@ -218,7 +231,7 @@ public final class SpyManager implements SpyAPI, Listener {
             BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId());
 
             if (bank == null) {
-                throw new IllegalStateException("Player is already removed from bank cache!");
+                return;
             }
 
             info.setBankPages(bank.getRunicItemContents());
@@ -227,10 +240,6 @@ public final class SpyManager implements SpyAPI, Listener {
 
     @EventHandler(ignoreCancelled = true)
     private void onPlayerTeleport(@NotNull PlayerTeleportEvent event) {
-        if (event.getCause() == PlayerTeleportEvent.TeleportCause.SPECTATE && this.spies.containsKey(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
-        }
-
         if (event.getTo() == null) {
             return;
         }
@@ -280,6 +289,41 @@ public final class SpyManager implements SpyAPI, Listener {
                 event.setCancelled(true);
                 return;
             }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+    private void onPlayerInteract(@NotNull PlayerInteractEvent event) {
+        if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+    private void onPlayerInteractAtEntity(@NotNull PlayerInteractAtEntityEvent event) {
+        if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void onEntityTarget(@NotNull EntityTargetEvent event) {
+        if (event.getTarget() != null && this.spies.containsKey(event.getTarget().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void onEntityPickup(@NotNull EntityPickupItemEvent event) {
+        if (this.spies.containsKey(event.getEntity().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void onPlayerDropItem(@NotNull PlayerDropItemEvent event) {
+        if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
         }
     }
 }

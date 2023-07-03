@@ -86,7 +86,7 @@ public class SpyCommand extends BaseCommand {
         this.send(player, "&9Started spying on " + arg + ".");
     }
 
-    @Subcommand("stop")
+    @Subcommand("stop|off")
     @CommandCompletion("@nothing")
     private void onStop(@NotNull Player player) {
         SpyAPI api = RunicModAPI.getSpyAPI();
