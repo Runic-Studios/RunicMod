@@ -1,33 +1,34 @@
 package com.runicrealms.runicspy.spy;
 
+import com.destroystokyo.paper.event.player.PlayerStartSpectatingEntityEvent;
 import com.runicrealms.RunicChat;
 import com.runicrealms.api.chat.ChatChannel;
 import com.runicrealms.api.event.ChatChannelMessageEvent;
 import com.runicrealms.channels.StaffChannel;
 import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.RunicCore;
+import com.runicrealms.plugin.api.NpcClickEvent;
 import com.runicrealms.plugin.api.event.BankOpenEvent;
 import com.runicrealms.plugin.common.util.ChatUtils;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
+import com.runicrealms.plugin.party.Party;
+import com.runicrealms.plugin.party.event.LeaveReason;
+import com.runicrealms.plugin.party.event.PartyLeaveEvent;
 import com.runicrealms.plugin.rdb.RunicDatabase;
-import com.runicrealms.plugin.rdb.event.CharacterHasQuitEvent;
 import com.runicrealms.runicitems.item.RunicItem;
 import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.ui.preview.BankPreview;
 import com.runicrealms.runicspy.ui.preview.InventoryPreview;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -102,16 +103,24 @@ public final class SpyManager implements SpyAPI, Listener {
             });
         }, 20, 100);
 
+        Party party = RunicCore.getPartyAPI().getParty(spy.getUniqueId());
+        if (party != null) {
+            party.sendMessageInChannel(spy.getName() + " has been removed this party &7Reason: left");
+            PartyLeaveEvent partyLeaveEvent = new PartyLeaveEvent(party, spy, LeaveReason.LEAVE);
+            Bukkit.getPluginManager().callEvent(partyLeaveEvent);
+            party.getMembers().remove(spy);
+            RunicCore.getPartyAPI().updatePlayerParty(spy.getUniqueId(), null);
+        }
+
         if (!RunicCore.getVanishAPI().getVanishedPlayers().contains(spy)) {
             RunicCore.getVanishAPI().hidePlayer(spy);
         }
 
         RunicChat.getRunicChatAPI().setWhisperSpy(spy, target, true);
 
-        spy.setFlying(true);
-
         this.spies.put(spy.getUniqueId(), new SpyInfo(target, spy.getLocation(), task));
 
+        spy.setGameMode(GameMode.SPECTATOR);
         spy.teleport(target.getLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
 
         ChatChannel staffChannel = this.getStaffChannel();
@@ -142,7 +151,8 @@ public final class SpyManager implements SpyAPI, Listener {
             RunicCore.getVanishAPI().showPlayer(spy);
         }
 
-        spy.setFlying(false);
+        spy.setGameMode(GameMode.ADVENTURE);
+
         spy.teleport(info.getOrigin(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         RunicChat.getRunicChatAPI().setWhisperSpy(spy, info.getTarget(), false);
     }
@@ -181,6 +191,7 @@ public final class SpyManager implements SpyAPI, Listener {
 
         if (RunicBank.getAPI().isViewingBank(info.getTarget().getUniqueId())) {
             info.getTarget().closeInventory();
+            RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()).setOpen(false);
         }
 
         spy.closeInventory();
@@ -214,8 +225,8 @@ public final class SpyManager implements SpyAPI, Listener {
         return optional.get();
     }
 
-    @EventHandler
-    private void onCharacterLeave(@NotNull CharacterHasQuitEvent event) {
+    @EventHandler(priority = EventPriority.LOWEST) //just listening, I need it to be called ASAP
+    private void onCharacterQuit(@NotNull PlayerQuitEvent event) { //CharacterQuitEvent runs too late as it is async, come back to this later
         this.removeSpy(event.getPlayer()); //remove spy if they exist
 
         for (Map.Entry<UUID, SpyInfo> pair : this.spies.entrySet()) {
@@ -240,6 +251,10 @@ public final class SpyManager implements SpyAPI, Listener {
 
     @EventHandler(ignoreCancelled = true)
     private void onPlayerTeleport(@NotNull PlayerTeleportEvent event) {
+        if (event.getCause() == PlayerTeleportEvent.TeleportCause.SPECTATE && this.spies.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
+
         if (event.getTo() == null) {
             return;
         }
@@ -293,37 +308,18 @@ public final class SpyManager implements SpyAPI, Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
-    private void onPlayerInteract(@NotNull PlayerInteractEvent event) {
+    private void onPlayerStartSpectatingEntity(@NotNull PlayerStartSpectatingEntityEvent event) {
         if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
+            event.getPlayer().setSpectatorTarget(null);
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
-    private void onPlayerInteractAtEntity(@NotNull PlayerInteractAtEntityEvent event) {
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST) //I want final say in this
+    private void onNpcClick(@NotNull NpcClickEvent event) {
         if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    private void onEntityTarget(@NotNull EntityTargetEvent event) {
-        if (event.getTarget() != null && this.spies.containsKey(event.getTarget().getUniqueId())) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    private void onEntityPickup(@NotNull EntityPickupItemEvent event) {
-        if (this.spies.containsKey(event.getEntity().getUniqueId())) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    private void onPlayerDropItem(@NotNull PlayerDropItemEvent event) {
-        if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
+            //event.setCancelled(true);
+            Bukkit.broadcastMessage("npc click");
         }
     }
 }

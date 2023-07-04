@@ -10,3 +10,5 @@ depend:
   - RunicChat
   - RunicDatabase
   - RunicBank
+  - RunicPvP
+  - RunicNpcs

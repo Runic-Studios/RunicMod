@@ -233,6 +233,7 @@ public class SpyCommand extends BaseCommand {
 
         if (RunicBank.getAPI().isViewingBank(info.getTarget().getUniqueId())) {
             info.getTarget().closeInventory();
+            RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()).setOpen(false);
         }
 
         for (int i = 0; i <= holder.getMaxPageIndex(); i++) {

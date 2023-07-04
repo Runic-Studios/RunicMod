@@ -21,6 +21,8 @@ dependencies {
     compileOnly(project(":Projects:Chat"))
     compileOnly(project(":Projects:Database"))
     compileOnly(project(":Projects:Bank"))
+    compileOnly(project(":Projects:PvP"))
+    compileOnly(project(":Projects:Npcs"))
 }
 
 java {
