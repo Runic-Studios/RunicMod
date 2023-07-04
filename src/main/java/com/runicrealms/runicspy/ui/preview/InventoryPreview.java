@@ -1,10 +1,17 @@
 package com.runicrealms.runicspy.ui.preview;
 
+import com.google.common.collect.ImmutableList;
+import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.runicspy.ui.RunicModUI;
-import org.bukkit.entity.Player;
+import org.bukkit.Material;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An inventory preview of a given user
@@ -15,15 +22,14 @@ public class InventoryPreview extends RunicModUI {
     private final ItemStack[] contents;
     private final ItemStack[] armor;
 
+    public static final ImmutableList<EquipmentSlot> SLOTS = ImmutableList.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND);
+    private static final List<ItemStack> ICONS = InventoryPreview.getEquipmentSlots();
+
     public InventoryPreview(@Nullable ItemStack[] contents, @Nullable ItemStack[] armor) {
         super("&r&d[&5Runic&2Spy&d] > &2Inventory Preview", 54);
         this.contents = contents;
         this.armor = armor;
         this.reload();
-    }
-
-    public InventoryPreview(@NotNull Player target) {
-        this(target.getInventory().getContents(), target.getInventory().getArmorContents());
     }
 
     /**
@@ -32,21 +38,41 @@ public class InventoryPreview extends RunicModUI {
     @Override
     public void reload() {
         for (int i = 0; i < this.getInventory().getSize(); i++) {
-            if (i > 18) {
-                this.getInventory().setItem(i, this.contents[i]);
+            if (i < 9 && i < EquipmentSlot.values().length) {
+                this.getInventory().setItem(i, i < this.armor.length ? this.armor[i] : InventoryPreview.ICONS.get(i));
+                continue;
+            } else if (i < 9) {
+                this.getInventory().setItem(i, null);
                 continue;
             }
 
-            if (i > 8) {
+            if (i < 18) {
                 this.getInventory().setItem(i, InventoryPreview.BLANK);
                 continue;
             }
 
-            if (i > this.armor.length - 1) {
-                continue;
-            }
-
-            this.getInventory().setItem(i, this.armor[i]);
+            this.getInventory().setItem(((6 - i / 9) * 9 + (i % 9)) + 9, this.contents[i - 18]);
         }
+    }
+
+    /**
+     * A method that premakes empty armor icons
+     *
+     * @return empty armor icons
+     */
+    @NotNull
+    private static List<ItemStack> getEquipmentSlots() {
+        List<ItemStack> stacks = new ArrayList<>();
+
+        for (EquipmentSlot slot : InventoryPreview.SLOTS) {
+            ItemStack stack = new ItemStack(Material.BARRIER);
+            ItemMeta meta = stack.getItemMeta();
+
+            meta.setDisplayName(ColorUtil.format("&c" + slot.name()));
+            stack.setItemMeta(meta);
+            stacks.add(stack);
+        }
+
+        return stacks;
     }
 }

@@ -2,6 +2,8 @@ package com.runicrealms.runicspy;
 
 import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.PaperCommandManager;
+import co.aikar.taskchain.BukkitTaskChainFactory;
+import co.aikar.taskchain.TaskChainFactory;
 import com.runicrealms.runicitems.TemplateManager;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.command.SpyCommand;
@@ -18,12 +20,14 @@ public final class RunicMod extends JavaPlugin {
     private static RunicMod plugin;
     private SpyManager spyManager;
     private PaperCommandManager commandManager;
+    private TaskChainFactory taskChainFactory;
 
     @Override
     public void onEnable() {
         RunicMod.plugin = this;
         this.spyManager = new SpyManager();
         this.commandManager = new PaperCommandManager(this);
+        this.taskChainFactory = BukkitTaskChainFactory.create(this);
 
         this.commandManager.getCommandConditions().addCondition("is-player", context -> {
             if (!(context.getIssuer().getIssuer() instanceof Player)) {
@@ -68,5 +72,15 @@ public final class RunicMod extends JavaPlugin {
     @NotNull
     public SpyAPI getSpyAPI() {
         return this.spyManager;
+    }
+
+    /**
+     * A method that returns this plugin's instance of a task chain factory
+     *
+     * @return this plugin's instance of a task chain factory
+     */
+    @NotNull
+    public TaskChainFactory getTaskChainFactory() {
+        return this.taskChainFactory;
     }
 }

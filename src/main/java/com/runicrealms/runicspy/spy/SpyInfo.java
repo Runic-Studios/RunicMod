@@ -4,8 +4,10 @@ import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.runicitems.item.RunicItem;
+import com.runicrealms.runicspy.ui.preview.InventoryPreview;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,7 @@ public class SpyInfo {
      */
     @Nullable
     public ItemStack[] getContents() {
-        return this.contents == null || this.target.isOnline() ? this.target.getInventory().getContents() : this.contents;
+        return this.contents == null || this.target.isOnline() ? this.target.getInventory().getStorageContents() : this.contents;
     }
 
     /**
@@ -124,7 +126,16 @@ public class SpyInfo {
      */
     @Nullable
     public ItemStack[] getArmor() {
-        return this.armor == null || this.target.isOnline() ? this.target.getInventory().getArmorContents() : this.armor;
+        if (this.armor != null && !this.target.isOnline()) {
+            return this.armor;
+        }
+
+        ItemStack[] armor = new ItemStack[EquipmentSlot.values().length - 1];
+        for (int i = 1; i < InventoryPreview.SLOTS.size(); i++) { //index of HAND is zero
+            armor[i] = this.getTarget().getInventory().getItem(InventoryPreview.SLOTS.get(i));
+        }
+
+        return armor;
     }
 
     /**

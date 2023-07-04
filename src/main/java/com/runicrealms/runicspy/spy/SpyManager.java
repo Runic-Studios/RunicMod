@@ -5,6 +5,7 @@ import com.runicrealms.RunicChat;
 import com.runicrealms.api.chat.ChatChannel;
 import com.runicrealms.api.event.ChatChannelMessageEvent;
 import com.runicrealms.channels.StaffChannel;
+import com.runicrealms.plugin.BankManager;
 import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.RunicCore;
 import com.runicrealms.plugin.api.NpcClickEvent;
@@ -28,8 +29,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +101,7 @@ public final class SpyManager implements SpyAPI, Listener {
                     info.setCenter(target.getLocation());
                 }
 
-                if (info.getCenter().distance(spy.getLocation()) >= 50) {
+                if (info.getCenter().distance(spy.getLocation()) >= 75) {
                     spy.teleport(info.getCenter(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                 }
             });
@@ -198,13 +202,31 @@ public final class SpyManager implements SpyAPI, Listener {
 
         Map<Integer, RunicItem[]> bankPages = info.getBankPages();
 
-        if (bankPages == null) {
-            spy.sendMessage(ColorUtil.format("&cThe player does not have a bank loaded!"));
+        if (bankPages != null) {
+            BankPreview preview = new BankPreview(bankPages);
+            spy.openInventory(preview.getInventory());
             return;
         }
 
-        BankPreview preview = new BankPreview(bankPages);
-        spy.openInventory(preview.getInventory());
+        RunicBank.getAPI().getLockedOutPlayers().add(info.getTarget().getUniqueId());
+
+        RunicMod.getInstance().getTaskChainFactory().newChain()
+                .asyncFirst(() -> RunicBank.getAPI().loadPlayerBankData(info.getTarget().getUniqueId()))
+                .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on previewBank()!")
+                .syncLast(playerBankData -> {
+                    if (info.getTarget().isOnline()) {
+                        BankHolder holder = RunicBank.getAPI().getBankHolderMap().put(info.getTarget().getUniqueId(), playerBankData.getBankHolder());
+                        holder.setCurrentPage(0); //will not ever be null
+                    } else {
+                        info.setBankPages(playerBankData.getPagesMap());
+                    }
+
+                    RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId());
+
+                    BankPreview preview = new BankPreview(info.getBankPages());
+                    spy.openInventory(preview.getInventory());
+                })
+                .execute();
     }
 
     /**
@@ -236,8 +258,14 @@ public final class SpyManager implements SpyAPI, Listener {
                 continue;
             }
 
-            info.setContents(event.getPlayer().getInventory().getContents());
-            info.setArmor(event.getPlayer().getInventory().getArmorContents());
+            info.setContents(event.getPlayer().getInventory().getStorageContents());
+
+            ItemStack[] armor = new ItemStack[EquipmentSlot.values().length - 1];
+            for (int i = 1; i < InventoryPreview.SLOTS.size(); i++) { //index of HAND is zero
+                armor[i] = event.getPlayer().getInventory().getItem(InventoryPreview.SLOTS.get(i));
+            }
+
+            info.setArmor(armor);
 
             BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId());
 
@@ -249,7 +277,7 @@ public final class SpyManager implements SpyAPI, Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     private void onPlayerTeleport(@NotNull PlayerTeleportEvent event) {
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.SPECTATE && this.spies.containsKey(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
@@ -297,7 +325,7 @@ public final class SpyManager implements SpyAPI, Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     private void onBankOpen(@NotNull BankOpenEvent event) {
         for (Map.Entry<UUID, SpyInfo> entry : this.spies.entrySet()) {
             if (entry.getValue().getTarget().getUniqueId().equals(entry.getValue().getTarget().getUniqueId()) && Bukkit.getPlayer(entry.getKey()).getOpenInventory().getTopInventory().getHolder() instanceof BankPreview) {
@@ -315,8 +343,15 @@ public final class SpyManager implements SpyAPI, Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST) //I want final say in this
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST) //I want first say in this
     private void onNpcClick(@NotNull NpcClickEvent event) {
+        if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST) //I want first say in this
+    private void onPlayerInteract(@NotNull PlayerInteractEvent event) {
         if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }

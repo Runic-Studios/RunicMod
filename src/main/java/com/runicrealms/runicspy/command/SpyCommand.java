@@ -10,7 +10,6 @@ import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
 import com.runicrealms.plugin.BankManager;
 import com.runicrealms.plugin.RunicBank;
-import com.runicrealms.plugin.RunicCore;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
@@ -20,6 +19,7 @@ import com.runicrealms.runicitems.TemplateManager;
 import com.runicrealms.runicitems.api.ItemWriteOperation;
 import com.runicrealms.runicitems.item.RunicItem;
 import com.runicrealms.runicitems.item.template.RunicItemTemplate;
+import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.RunicModAPI;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.spy.SpyInfo;
@@ -69,6 +69,11 @@ public class SpyCommand extends BaseCommand {
 
         if (player.getUniqueId().equals(target.getUniqueId())) {
             this.send(player, "&cYou cannot spy on yourself!");
+            return;
+        }
+
+        if (target.hasPermission("runic.spy")) {
+            this.send(player, "&cYou cannot spy on someone else who has spy permissions!");
             return;
         }
 
@@ -166,15 +171,14 @@ public class SpyCommand extends BaseCommand {
             return;
         }
 
-
-        RunicCore.getTaskChainFactory().newChain()
+        RunicMod.getInstance().getTaskChainFactory().newChain()
                 .asyncFirst(() -> RunicBank.getAPI().loadPlayerBankData(info.getTarget().getUniqueId()))
-                .abortIfNull(BankManager.CONSOLE_LOG, player, "RunicMod failed to load bank data on onWipe()!")
+                .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on onWipe()!")
                 .syncLast(playerBankData -> this.clearBankHolder(playerBankData.getBankHolder(), info, template, player))
                 .execute();
-        RunicCore.getTaskChainFactory().newChain()
+        RunicMod.getInstance().getTaskChainFactory().newChain()
                 .asyncFirst(() -> RunicItems.getDataAPI().loadInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot()))
-                .abortIfNull(BankManager.CONSOLE_LOG, player, "RunicMod failed to load inventory data on onWipe()!")
+                .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load inventory data on onWipe()!")
                 .syncLast(inventoryData -> {
                     RunicDatabase.getAPI().getDataAPI().preventLogin(info.getTarget().getUniqueId());
                     ((ItemWriteOperation) RunicItems.getDataAPI()).updateInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot(), inventoryData.getContentsMap().get(info.getCharacterSlot()), () -> {
