@@ -318,8 +318,7 @@ public final class SpyManager implements SpyAPI, Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST) //I want final say in this
     private void onNpcClick(@NotNull NpcClickEvent event) {
         if (this.spies.containsKey(event.getPlayer().getUniqueId())) {
-            //event.setCancelled(true);
-            Bukkit.broadcastMessage("npc click");
+            event.setCancelled(true);
         }
     }
 }
