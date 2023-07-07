@@ -166,22 +166,30 @@ public class SpyCommand extends BaseCommand {
         }
 
         if (info.getTarget().isOnline()) {
-            RunicItems.getInventoryAPI().clearInventory(info.getTarget().getInventory(), template, player);
-            this.clearBankHolder(RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()), info, template, player);
+            RunicItems.getInventoryAPI().clearInventory(info.getTarget().getInventory(), template, null, true);
+            this.clearBankHolder(RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()), info, template);
             return;
         }
 
         RunicMod.getInstance().getTaskChainFactory().newChain()
                 .asyncFirst(() -> RunicBank.getAPI().loadPlayerBankData(info.getTarget().getUniqueId()))
                 .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on onWipe()!")
-                .syncLast(playerBankData -> this.clearBankHolder(playerBankData.getBankHolder(), info, template, player))
+                .syncLast(playerBankData -> this.clearBankHolder(playerBankData.getBankHolder(), info, template))
                 .execute();
         RunicMod.getInstance().getTaskChainFactory().newChain()
                 .asyncFirst(() -> RunicItems.getDataAPI().loadInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot()))
                 .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load inventory data on onWipe()!")
                 .syncLast(inventoryData -> {
                     RunicDatabase.getAPI().getDataAPI().preventLogin(info.getTarget().getUniqueId());
-                    ((ItemWriteOperation) RunicItems.getDataAPI()).updateInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot(), inventoryData.getContentsMap().get(info.getCharacterSlot()), () -> {
+                    RunicItem[] inventory = inventoryData.getContentsMap().get(info.getCharacterSlot());
+
+                    for (int i = 0; i < inventory.length; i++) {
+                        if (inventory[i] != null && inventory[i].getTemplateId().equals(template.getId())) {
+                            inventory[i] = null;
+                        }
+                    }
+
+                    ((ItemWriteOperation) RunicItems.getDataAPI()).updateInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot(), inventory, () -> {
                     });
                 })
                 .execute();
@@ -226,9 +234,8 @@ public class SpyCommand extends BaseCommand {
      * @param holder   the bank inventory holder
      * @param info     the spy info
      * @param template the item to be removed
-     * @param sender   the spy
      */
-    private void clearBankHolder(@Nullable BankHolder holder, @NotNull SpyInfo info, @NotNull RunicItemTemplate template, @NotNull Player sender) {
+    private void clearBankHolder(@Nullable BankHolder holder, @NotNull SpyInfo info, @NotNull RunicItemTemplate template) {
         if (holder == null) {
             return;
         }
@@ -242,7 +249,7 @@ public class SpyCommand extends BaseCommand {
 
         for (int i = 0; i <= holder.getMaxPageIndex(); i++) {
             holder.setCurrentPage(i);
-            RunicItems.getInventoryAPI().clearInventory(holder.getInventory(), template, sender);
+            RunicItems.getInventoryAPI().clearInventory(holder.getInventory(), template, null, true);
             holder.savePage();
         }
 
@@ -251,9 +258,8 @@ public class SpyCommand extends BaseCommand {
                         info.getTarget().getUniqueId(),
                         holder.getRunicItemContents(),
                         holder.getMaxPageIndex(),
-                        true,
-                        () -> {
-                        }
+                        false, //TODO MAKE REMOVELOCKOUT WORK
+                        () -> RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId())
                 );
     }
 

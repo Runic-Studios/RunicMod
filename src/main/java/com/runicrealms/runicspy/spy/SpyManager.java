@@ -32,7 +32,6 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * A class that manages all mods in spy mode
@@ -215,8 +215,8 @@ public final class SpyManager implements SpyAPI, Listener {
                 .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on previewBank()!")
                 .syncLast(playerBankData -> {
                     if (info.getTarget().isOnline()) {
-                        BankHolder holder = RunicBank.getAPI().getBankHolderMap().put(info.getTarget().getUniqueId(), playerBankData.getBankHolder());
-                        holder.setCurrentPage(0); //will not ever be null
+                        RunicBank.getAPI().getBankHolderMap().put(info.getTarget().getUniqueId(), playerBankData.getBankHolder());
+                        RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()).setCurrentPage(0); //will not ever be null
                     } else {
                         info.setBankPages(playerBankData.getPagesMap());
                     }
@@ -260,9 +260,9 @@ public final class SpyManager implements SpyAPI, Listener {
 
             info.setContents(event.getPlayer().getInventory().getStorageContents());
 
-            ItemStack[] armor = new ItemStack[EquipmentSlot.values().length - 1];
-            for (int i = 1; i < InventoryPreview.SLOTS.size(); i++) { //index of HAND is zero
-                armor[i] = event.getPlayer().getInventory().getItem(InventoryPreview.SLOTS.get(i));
+            ItemStack[] armor = new ItemStack[SpyInfo.ARMOR_SLOTS.size()];
+            for (int i = 0; i < SpyInfo.ARMOR_SLOTS.size(); i++) {
+                armor[i] = event.getPlayer().getInventory().getItem(SpyInfo.ARMOR_SLOTS.get(i));
             }
 
             info.setArmor(armor);
@@ -270,6 +270,7 @@ public final class SpyManager implements SpyAPI, Listener {
             BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId());
 
             if (bank == null) {
+                RunicMod.getInstance().getLogger().log(Level.SEVERE, "Was unable to save bank data to SpyInfo for " + event.getPlayer().getName());
                 return;
             }
 
@@ -283,7 +284,7 @@ public final class SpyManager implements SpyAPI, Listener {
             event.setCancelled(true);
         }
 
-        if (event.getTo() == null) {
+        if (event.getTo() == null || RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(event.getPlayer().getUniqueId()) == -1) {
             return;
         }
 

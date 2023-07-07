@@ -22,12 +22,12 @@ public class BankPreview extends RunicModUI {
     private int currentPage;
 
     public BankPreview(@NotNull Map<Integer, RunicItem[]> pages) {
-        super("&r&d[&5Runic&2Spy&d] > &2Bank Preview", 54, true);
+        super("&r&d[&5Runic&2Spy&d] > &2Bank Preview", 54);
         this.pages = new HashMap<>();
 
         for (Map.Entry<Integer, RunicItem[]> entry : pages.entrySet()) {
             this.pages.put(entry.getKey(), Arrays.stream(entry.getValue())
-                    .map(RunicItem::generateItem)
+                    .map(runicItem -> runicItem != null ? runicItem.generateItem() : null)
                     .toArray(ItemStack[]::new));
         }
 

@@ -24,42 +24,18 @@ import java.util.function.BiConsumer;
 public abstract class RunicModUI implements InventoryHolder {
     private final Inventory inventory;
     private final Map<Integer, BiConsumer<Player, ItemStack>> clickEvents;
-    private boolean destroyItemsOnEdge;
 
     protected static final ItemStack BLANK = RunicModUI.blank();
 
-    public RunicModUI(@NotNull String title, int slots, boolean destroyItemsOnEdge) {
+    public RunicModUI(@NotNull String title, int slots) {
         this.inventory = Bukkit.createInventory(this, slots, ColorUtil.format(title));
         this.clickEvents = new HashMap<>();
-        this.destroyItemsOnEdge = destroyItemsOnEdge;
-    }
-
-    public RunicModUI(@NotNull String title, int slots) {
-        this(title, slots, false);
     }
 
     @NotNull
     @Override
     public Inventory getInventory() {
         return this.inventory;
-    }
-
-    /**
-     * A method used to check if the viewer clicks outside the inventory view while holding an item if it should be destroyed
-     *
-     * @return if the viewer clicks outside the inventory view while holding an item if it should be destroyed
-     */
-    public boolean getDestroyItemsOnEdge() {
-        return this.destroyItemsOnEdge;
-    }
-
-    /**
-     * A method used to set if the viewer clicks outside the inventory view while holding an item if it should be destroyed
-     *
-     * @param destroyItemsOnEdge if the viewer clicks outside the inventory view while holding an item if it should be destroyed
-     */
-    public void setDestroyItemsOnEdge(boolean destroyItemsOnEdge) {
-        this.destroyItemsOnEdge = destroyItemsOnEdge;
     }
 
     /**
@@ -104,7 +80,7 @@ public abstract class RunicModUI implements InventoryHolder {
     private static ItemStack blank() {
         ItemStack blank = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = blank.getItemMeta();
-        meta.setDisplayName("");
+        meta.setDisplayName(ColorUtil.format("&r"));
         blank.setItemMeta(meta);
 
         return blank;

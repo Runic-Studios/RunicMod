@@ -16,7 +16,7 @@ import java.util.function.BiConsumer;
  * A class used to listen for basic UI events
  */
 public class RunicModUIListener implements Listener {
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     private void onInventoryClick(@NotNull InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof RunicModUI modUI)) {
             return;
@@ -24,12 +24,7 @@ public class RunicModUIListener implements Listener {
 
         Inventory inventory = event.getClickedInventory();
 
-        if (inventory == null && modUI.getDestroyItemsOnEdge()) {
-            event.getWhoClicked().setItemOnCursor(null);
-            return;
-        }
-
-        if (inventory == null || !(inventory.getHolder() instanceof RunicModUI)) {
+        if (inventory == null) {
             return;
         }
 

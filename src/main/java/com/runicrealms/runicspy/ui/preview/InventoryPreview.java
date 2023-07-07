@@ -1,7 +1,7 @@
 package com.runicrealms.runicspy.ui.preview;
 
-import com.google.common.collect.ImmutableList;
 import com.runicrealms.plugin.common.util.ColorUtil;
+import com.runicrealms.runicspy.spy.SpyInfo;
 import com.runicrealms.runicspy.ui.RunicModUI;
 import org.bukkit.Material;
 import org.bukkit.inventory.EquipmentSlot;
@@ -22,7 +22,6 @@ public class InventoryPreview extends RunicModUI {
     private final ItemStack[] contents;
     private final ItemStack[] armor;
 
-    public static final ImmutableList<EquipmentSlot> SLOTS = ImmutableList.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND);
     private static final List<ItemStack> ICONS = InventoryPreview.getEquipmentSlots();
 
     public InventoryPreview(@Nullable ItemStack[] contents, @Nullable ItemStack[] armor) {
@@ -38,8 +37,8 @@ public class InventoryPreview extends RunicModUI {
     @Override
     public void reload() {
         for (int i = 0; i < this.getInventory().getSize(); i++) {
-            if (i < 9 && i < EquipmentSlot.values().length) {
-                this.getInventory().setItem(i, i < this.armor.length ? this.armor[i] : InventoryPreview.ICONS.get(i));
+            if (i < 9 && i < SpyInfo.ARMOR_SLOTS.size()) {
+                this.getInventory().setItem(i, this.armor[i] != null && this.armor[i].getType() != Material.AIR ? this.armor[i] : InventoryPreview.ICONS.get(i));
                 continue;
             } else if (i < 9) {
                 this.getInventory().setItem(i, null);
@@ -64,7 +63,7 @@ public class InventoryPreview extends RunicModUI {
     private static List<ItemStack> getEquipmentSlots() {
         List<ItemStack> stacks = new ArrayList<>();
 
-        for (EquipmentSlot slot : InventoryPreview.SLOTS) {
+        for (EquipmentSlot slot : SpyInfo.ARMOR_SLOTS) {
             ItemStack stack = new ItemStack(Material.BARRIER);
             ItemMeta meta = stack.getItemMeta();
 
