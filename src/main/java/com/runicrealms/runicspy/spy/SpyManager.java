@@ -10,7 +10,6 @@ import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.RunicCore;
 import com.runicrealms.plugin.api.NpcClickEvent;
 import com.runicrealms.plugin.api.event.BankOpenEvent;
-import com.runicrealms.plugin.common.util.ChatUtils;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.party.Party;
@@ -97,8 +96,8 @@ public final class SpyManager implements SpyAPI, Listener {
             }
 
             Bukkit.getScheduler().runTask(RunicMod.getInstance(), () -> {
-                if (info.getTarget().isOnline() && RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(info.getTarget().getUniqueId()) != -1) {
-                    info.setCenter(target.getLocation());
+                if (info.isTargetOnline()) {
+                    info.setCenter(info.getTarget().getLocation());
                 }
 
                 if (info.getCenter().distance(spy.getLocation()) >= 75) {
@@ -127,13 +126,7 @@ public final class SpyManager implements SpyAPI, Listener {
         spy.setGameMode(GameMode.SPECTATOR);
         spy.teleport(target.getLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
 
-        ChatChannel staffChannel = this.getStaffChannel();
-
-        RunicChat.getRunicChatAPI().setPlayerChatChannel(spy, staffChannel);
-
-        for (Player player : staffChannel.getRecipients(spy)) {
-            ChatUtils.sendCenteredMessage(player, ColorUtil.format("&r&9&l" + spy.getName() + " is spying on " + target.getName()));
-        }
+        RunicChat.getRunicChatAPI().setPlayerChatChannel(spy, this.getStaffChannel());
     }
 
     /**
@@ -176,7 +169,7 @@ public final class SpyManager implements SpyAPI, Listener {
 
         spy.closeInventory();
 
-        InventoryPreview preview = new InventoryPreview(info.getContents(), info.getArmor());
+        InventoryPreview preview = new InventoryPreview(info);
         spy.openInventory(preview.getInventory());
     }
 
@@ -214,7 +207,7 @@ public final class SpyManager implements SpyAPI, Listener {
                 .asyncFirst(() -> RunicBank.getAPI().loadPlayerBankData(info.getTarget().getUniqueId()))
                 .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on previewBank()!")
                 .syncLast(playerBankData -> {
-                    if (info.getTarget().isOnline()) {
+                    if (info.getTarget().isOnline()) { //banks are account wide so it does not matterRunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId());
                         RunicBank.getAPI().getBankHolderMap().put(info.getTarget().getUniqueId(), playerBankData.getBankHolder());
                         RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()).setCurrentPage(0); //will not ever be null
                     } else {

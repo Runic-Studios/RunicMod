@@ -29,6 +29,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * The command that acts as an interface to the spy system
  *
@@ -165,16 +167,31 @@ public class SpyCommand extends BaseCommand {
             return;
         }
 
-        if (info.getTarget().isOnline()) {
+        if (info.isTargetOnline()) {
             RunicItems.getInventoryAPI().clearInventory(info.getTarget().getInventory(), template, null, true);
             this.clearBankHolder(RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()), info, template);
             return;
         }
 
+        //online but not same character slot
+        if (info.getTarget().isOnline()) {
+            RunicBank.getAPI().getLockedOutPlayers().add(info.getTarget().getUniqueId());
+        }
+
         RunicMod.getInstance().getTaskChainFactory().newChain()
                 .asyncFirst(() -> RunicBank.getAPI().loadPlayerBankData(info.getTarget().getUniqueId()))
+                .sync(playerBankData -> {
+                    if (playerBankData == null && info.getTarget().isOnline()) {
+                        RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId());
+                    }
+
+                    return playerBankData;
+                })
                 .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on onWipe()!")
-                .syncLast(playerBankData -> this.clearBankHolder(playerBankData.getBankHolder(), info, template))
+                .syncLast(playerBankData -> {
+                    this.clearBankHolder(playerBankData.getBankHolder(), info, template);
+                    RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId());
+                })
                 .execute();
         RunicMod.getInstance().getTaskChainFactory().newChain()
                 .asyncFirst(() -> RunicItems.getDataAPI().loadInventoryData(info.getTarget().getUniqueId(), info.getCharacterSlot()))
@@ -215,7 +232,13 @@ public class SpyCommand extends BaseCommand {
             info.getContents()[i] = null;
         }
 
-        for (RunicItem[] page : info.getBankPages().values()) {
+        Map<Integer, RunicItem[]> bankPages = info.getBankPages();
+
+        if (bankPages == null || RunicBank.getAPI().getBankHolderMap().get(info.getTarget().getUniqueId()) == null) {
+            return;
+        }
+
+        for (RunicItem[] page : bankPages.values()) {
             for (int i = 0; i < page.length; i++) {
                 RunicItem item = page[i];
 
@@ -258,7 +281,7 @@ public class SpyCommand extends BaseCommand {
                         info.getTarget().getUniqueId(),
                         holder.getRunicItemContents(),
                         holder.getMaxPageIndex(),
-                        false, //TODO MAKE REMOVELOCKOUT WORK
+                        true, //TODO MAKE REMOVELOCKOUT WORK
                         () -> RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId())
                 );
     }

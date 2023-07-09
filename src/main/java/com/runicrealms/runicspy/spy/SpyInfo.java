@@ -5,6 +5,7 @@ import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.runicitems.item.RunicItem;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * A class that contains all information needed by the plugin for the spy
@@ -22,10 +24,11 @@ import java.util.Map;
  * @since 6/24/23
  */
 public class SpyInfo {
-    private final Player target;
+    private final UUID target;
     private final Location origin;
     private final BukkitTask task;
     private final int characterSlot;
+    private Player targetReference;
     private Location center;
     private ItemStack[] contents;
     private ItemStack[] armor;
@@ -34,10 +37,11 @@ public class SpyInfo {
     public static final ImmutableList<EquipmentSlot> ARMOR_SLOTS = ImmutableList.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND);
 
     public SpyInfo(@NotNull Player target, @NotNull Location origin, @NotNull BukkitTask task) {
-        this.target = target;
+        this.target = target.getUniqueId();
         this.origin = origin;
         this.task = task;
         this.characterSlot = RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(target.getUniqueId());
+        this.targetReference = target;
         this.center = target.getLocation();
         this.contents = null;
         this.armor = null;
@@ -50,8 +54,24 @@ public class SpyInfo {
      * @return the user being spied on
      */
     @NotNull
-    public Player getTarget() {
+    public UUID getTargetUUID() {
         return this.target;
+    }
+
+    /**
+     * A method that returns the user being spied on
+     *
+     * @return the user being spied on
+     */
+    @NotNull
+    public Player getTarget() {
+        Player player = Bukkit.getPlayer(this.target);
+
+        if (player != null) {
+            this.targetReference = player;
+        }
+
+        return this.targetReference;
     }
 
     /**
@@ -109,7 +129,7 @@ public class SpyInfo {
      */
     @Nullable
     public ItemStack[] getContents() {
-        return this.contents == null || this.target.isOnline() ? this.target.getInventory().getStorageContents() : this.contents;
+        return this.contents == null || this.isTargetOnline() ? this.getTarget().getInventory().getStorageContents() : this.contents;
     }
 
     /**
@@ -128,7 +148,7 @@ public class SpyInfo {
      */
     @Nullable
     public ItemStack[] getArmor() {
-        if (this.armor != null && !this.target.isOnline()) {
+        if (this.armor != null && !this.isTargetOnline()) {
             return this.armor;
         }
 
@@ -156,14 +176,14 @@ public class SpyInfo {
      */
     @Nullable
     public Map<Integer, RunicItem[]> getBankPages() {
-        BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(this.target.getUniqueId());
+        BankHolder bank = RunicBank.getAPI().getBankHolderMap().get(this.target);
 
         if (bank == null && this.bankPages == null) {
             return null;
         }
 
         //if this.target.isOnline() is true, the bank will not return null
-        return this.bankPages == null || this.target.isOnline() ? bank.getRunicItemContents() : this.bankPages;
+        return bank != null && (this.bankPages == null || this.isTargetOnline()) ? bank.getRunicItemContents() : this.bankPages;
     }
 
     /**
@@ -173,5 +193,14 @@ public class SpyInfo {
      */
     public void setBankPages(@Nullable Map<Integer, RunicItem[]> bankPages) {
         this.bankPages = bankPages;
+    }
+
+    /**
+     * A method used to check if the target is online
+     *
+     * @return if the target is online
+     */
+    public boolean isTargetOnline() {
+        return this.getTarget().isOnline() && RunicDatabase.getAPI().getCharacterAPI().getCharacterSlot(this.target) == this.characterSlot;
     }
 }

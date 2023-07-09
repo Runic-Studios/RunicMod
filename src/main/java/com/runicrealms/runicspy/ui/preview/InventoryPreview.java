@@ -8,7 +8,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +23,10 @@ public class InventoryPreview extends RunicModUI {
 
     private static final List<ItemStack> ICONS = InventoryPreview.getEquipmentSlots();
 
-    public InventoryPreview(@Nullable ItemStack[] contents, @Nullable ItemStack[] armor) {
+    public InventoryPreview(@NotNull SpyInfo info) {
         super("&r&d[&5Runic&2Spy&d] > &2Inventory Preview", 54);
-        this.contents = contents;
-        this.armor = armor;
+        this.contents = info.getContents();
+        this.armor = info.getArmor();
         this.reload();
     }
 
