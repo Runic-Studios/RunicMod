@@ -8,18 +8,11 @@ import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Conditions;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
-import com.runicrealms.plugin.BankManager;
 import com.runicrealms.plugin.RunicBank;
 import com.runicrealms.plugin.common.util.ColorUtil;
 import com.runicrealms.plugin.model.BankHolder;
-import com.runicrealms.plugin.rdb.RunicDatabase;
-import com.runicrealms.runicitems.ItemManager;
 import com.runicrealms.runicitems.RunicItems;
-import com.runicrealms.runicitems.TemplateManager;
-import com.runicrealms.runicitems.api.ItemWriteOperation;
-import com.runicrealms.runicitems.item.RunicItem;
 import com.runicrealms.runicitems.item.template.RunicItemTemplate;
-import com.runicrealms.runicspy.RunicMod;
 import com.runicrealms.runicspy.api.RunicModAPI;
 import com.runicrealms.runicspy.api.SpyAPI;
 import com.runicrealms.runicspy.spy.SpyInfo;
@@ -28,8 +21,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * The command that acts as an interface to the spy system
@@ -146,6 +137,9 @@ public class SpyCommand extends BaseCommand {
     @CommandCompletion("@item-ids @nothing")
     @CommandPermission("runic.spy.wipe")
     private void onWipe(@NotNull Player player, @NotNull String[] args) {
+        player.sendMessage(ColorUtil.format("&r&cNot implemented yet... Coming soon!"));
+        //CODE BELOW DOES NOT WIPE BANK CORRECTLY FOR OFFLINE PLAYERS, IT'S BECAUSE THEY ARE NOT IN THE CACHE (refer to first line of implementation of updateBankData)
+        /*
         if (args.length != 1) {
             this.onHelp(player);
             return;
@@ -190,7 +184,7 @@ public class SpyCommand extends BaseCommand {
                 .abortIfNull(BankManager.CONSOLE_LOG, info.getTarget(), "RunicMod failed to load bank data on onWipe()!")
                 .syncLast(playerBankData -> {
                     this.clearBankHolder(playerBankData.getBankHolder(), info, template);
-                    RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId());
+                    //RunicBank.getAPI().getLockedOutPlayers().remove(info.getTarget().getUniqueId());
                 })
                 .execute();
         RunicMod.getInstance().getTaskChainFactory().newChain()
@@ -249,6 +243,7 @@ public class SpyCommand extends BaseCommand {
                 page[i] = null;
             }
         }
+         */
     }
 
     /**
