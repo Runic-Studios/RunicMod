@@ -36,10 +36,10 @@ public class SpyCommand extends BaseCommand {
     @Default
     private void onHelp(@NotNull CommandSender sender) {
         this.send(sender, "&cImproper arguments:\n"
-                + "\t&9- /spy on <player> - &6enabled/disables spy mode on the given target\n"
-                + "\t&9- /spy stop - &6disables spy mode\n"
-                + "\t&9- /spy inventory - &6opens a preview of the target's inventory\n"
-                + "\t&9- /spy bank - &6opens a preview of the target's bank\n"
+                + "&9- /spy on <player> - &6enabled/disables spy mode on the given target\n"
+                + "&9- /spy stop - &6disables spy mode\n"
+                + "&9- /spy inventory - &6opens a preview of the target's inventory\n"
+                + "&9- /spy bank - &6opens a preview of the target's bank\n"
                 + (sender.hasPermission("runic.spy.wipe") ? "\t&9- /spy wipe <item-id> - &6wipes all items of the given ID from the target's bank and inventory" : ""));
     }
 
