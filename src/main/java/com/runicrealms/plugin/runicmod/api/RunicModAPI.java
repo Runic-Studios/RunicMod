@@ -1,6 +1,6 @@
-package com.runicrealms.runicspy.api;
+package com.runicrealms.plugin.runicmod.api;
 
-import com.runicrealms.runicspy.RunicMod;
+import com.runicrealms.plugin.runicmod.RunicMod;
 import org.jetbrains.annotations.NotNull;
 
 /**

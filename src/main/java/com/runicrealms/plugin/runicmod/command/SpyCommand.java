@@ -1,4 +1,4 @@
-package com.runicrealms.runicspy.command;
+package com.runicrealms.plugin.runicmod.command;
 
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CatchUnknown;
@@ -8,14 +8,14 @@ import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Conditions;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
-import com.runicrealms.plugin.RunicBank;
+import com.runicrealms.plugin.bank.RunicBank;
 import com.runicrealms.plugin.common.util.ColorUtil;
-import com.runicrealms.plugin.model.BankHolder;
-import com.runicrealms.runicitems.RunicItems;
-import com.runicrealms.runicitems.item.template.RunicItemTemplate;
-import com.runicrealms.runicspy.api.RunicModAPI;
-import com.runicrealms.runicspy.api.SpyAPI;
-import com.runicrealms.runicspy.spy.SpyInfo;
+import com.runicrealms.plugin.bank.model.BankHolder;
+import com.runicrealms.plugin.runicitems.RunicItems;
+import com.runicrealms.plugin.runicitems.item.template.RunicItemTemplate;
+import com.runicrealms.plugin.runicmod.api.SpyAPI;
+import com.runicrealms.plugin.runicmod.spy.SpyInfo;
+import com.runicrealms.plugin.runicmod.api.RunicModAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

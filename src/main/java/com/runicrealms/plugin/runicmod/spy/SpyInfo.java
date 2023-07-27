@@ -1,10 +1,10 @@
-package com.runicrealms.runicspy.spy;
+package com.runicrealms.plugin.runicmod.spy;
 
 import com.google.common.collect.ImmutableList;
-import com.runicrealms.plugin.RunicBank;
-import com.runicrealms.plugin.model.BankHolder;
+import com.runicrealms.plugin.bank.RunicBank;
+import com.runicrealms.plugin.bank.model.BankHolder;
 import com.runicrealms.plugin.rdb.RunicDatabase;
-import com.runicrealms.runicitems.item.RunicItem;
+import com.runicrealms.plugin.runicitems.item.RunicItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

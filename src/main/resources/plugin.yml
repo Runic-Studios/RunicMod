@@ -1,6 +1,6 @@
 name: RunicMod
 version: '${version}'
-main: com.runicrealms.runicspy.RunicMod
+main: com.runicrealms.plugin.runicmod.RunicMod
 api-version: '1.19'
 author: 'BoBoBalloon'
 depend:

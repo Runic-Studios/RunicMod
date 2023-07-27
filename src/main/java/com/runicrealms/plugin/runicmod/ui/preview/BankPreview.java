@@ -1,8 +1,8 @@
-package com.runicrealms.runicspy.ui.preview;
+package com.runicrealms.plugin.runicmod.ui.preview;
 
-import com.runicrealms.plugin.util.BankUtil;
-import com.runicrealms.runicitems.item.RunicItem;
-import com.runicrealms.runicspy.ui.RunicModUI;
+import com.runicrealms.plugin.bank.util.BankUtil;
+import com.runicrealms.plugin.runicitems.item.RunicItem;
+import com.runicrealms.plugin.runicmod.ui.RunicModUI;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;

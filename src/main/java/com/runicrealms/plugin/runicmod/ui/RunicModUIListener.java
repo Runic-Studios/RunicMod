@@ -1,4 +1,4 @@
-package com.runicrealms.runicspy.ui;
+package com.runicrealms.plugin.runicmod.ui;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

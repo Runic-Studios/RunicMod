@@ -1,14 +1,14 @@
-package com.runicrealms.runicspy;
+package com.runicrealms.plugin.runicmod;
 
 import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.PaperCommandManager;
 import co.aikar.taskchain.BukkitTaskChainFactory;
 import co.aikar.taskchain.TaskChainFactory;
-import com.runicrealms.runicitems.TemplateManager;
-import com.runicrealms.runicspy.api.SpyAPI;
-import com.runicrealms.runicspy.command.SpyCommand;
-import com.runicrealms.runicspy.spy.SpyManager;
-import com.runicrealms.runicspy.ui.RunicModUIListener;
+import com.runicrealms.plugin.runicitems.TemplateManager;
+import com.runicrealms.plugin.runicmod.api.SpyAPI;
+import com.runicrealms.plugin.runicmod.spy.SpyManager;
+import com.runicrealms.plugin.runicmod.command.SpyCommand;
+import com.runicrealms.plugin.runicmod.ui.RunicModUIListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;

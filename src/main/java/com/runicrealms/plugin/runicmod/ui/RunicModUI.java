@@ -1,4 +1,4 @@
-package com.runicrealms.runicspy.ui;
+package com.runicrealms.plugin.runicmod.ui;
 
 import com.runicrealms.plugin.common.util.ColorUtil;
 import org.bukkit.Bukkit;

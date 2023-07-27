@@ -1,8 +1,8 @@
-package com.runicrealms.runicspy.ui.preview;
+package com.runicrealms.plugin.runicmod.ui.preview;
 
 import com.runicrealms.plugin.common.util.ColorUtil;
-import com.runicrealms.runicspy.spy.SpyInfo;
-import com.runicrealms.runicspy.ui.RunicModUI;
+import com.runicrealms.plugin.runicmod.spy.SpyInfo;
+import com.runicrealms.plugin.runicmod.ui.RunicModUI;
 import org.bukkit.Material;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
