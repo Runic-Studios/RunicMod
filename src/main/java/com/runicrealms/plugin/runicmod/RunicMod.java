@@ -6,8 +6,9 @@ import co.aikar.taskchain.BukkitTaskChainFactory;
 import co.aikar.taskchain.TaskChainFactory;
 import com.runicrealms.plugin.runicitems.TemplateManager;
 import com.runicrealms.plugin.runicmod.api.SpyAPI;
-import com.runicrealms.plugin.runicmod.spy.SpyManager;
+import com.runicrealms.plugin.runicmod.command.ChatLogCommand;
 import com.runicrealms.plugin.runicmod.command.SpyCommand;
+import com.runicrealms.plugin.runicmod.spy.SpyManager;
 import com.runicrealms.plugin.runicmod.ui.RunicModUIListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -40,9 +41,14 @@ public final class RunicMod extends JavaPlugin {
             return TemplateManager.getTemplates().keySet();
         });
 
+        ChatLogCommand chatLogCommand = new ChatLogCommand();
+
         Bukkit.getPluginManager().registerEvents(this.spyManager, this);
         Bukkit.getPluginManager().registerEvents(new RunicModUIListener(), this);
+        Bukkit.getPluginManager().registerEvents(chatLogCommand, this);
+
         this.commandManager.registerCommand(new SpyCommand());
+        this.commandManager.registerCommand(chatLogCommand);
     }
 
     @Override
