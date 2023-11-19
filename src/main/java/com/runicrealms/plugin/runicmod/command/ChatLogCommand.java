@@ -40,19 +40,24 @@ public class ChatLogCommand extends BaseCommand implements Listener {
     private void execute(@NotNull CommandSender sender) {
         if (RECENT_MESSSAGES.isEmpty()) {
             sender.sendMessage(ColorUtil.format("&cThere are no chat messsages in the cache!"));
+            return;
         }
 
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        String timestamp = new Timestamp(System.currentTimeMillis()).toString();
+        String trimmed = timestamp.substring(0, timestamp.length() - 4).replaceAll(":", "-");
 
-        File file = new File(RunicMod.getInstance().getDataFolder(), timestamp.toString());
+        File parent = RunicMod.getInstance().getDataFolder();
 
-        if (!file.exists()) {
-            file.mkdirs();
+        if (!parent.exists()) {
+            parent.mkdirs();
         }
+
+        File file = new File(parent, trimmed + ".txt");
 
         BufferedWriter writer;
 
         try {
+            file.createNewFile();
             writer = new BufferedWriter(new FileWriter(file));
         } catch (IOException e) {
             sender.sendMessage(ColorUtil.format("&cThere was an error accessing a file on disk!"));
@@ -75,7 +80,7 @@ public class ChatLogCommand extends BaseCommand implements Listener {
 
         RECENT_MESSSAGES.clear();
 
-        sender.sendMessage(ColorUtil.format("&aLogs written to disk at: &f&l" + timestamp));
+        sender.sendMessage(ColorUtil.format("&aLogs written to disk at: &f&l" + trimmed));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
