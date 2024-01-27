@@ -1,26 +1,26 @@
 package com.runicrealms.plugin.runicmod.spy;
 
 import com.destroystokyo.paper.event.player.PlayerStartSpectatingEntityEvent;
+import com.runicrealms.plugin.RunicCore;
+import com.runicrealms.plugin.bank.BankManager;
+import com.runicrealms.plugin.bank.RunicBank;
+import com.runicrealms.plugin.bank.api.event.BankOpenEvent;
+import com.runicrealms.plugin.bank.model.BankHolder;
 import com.runicrealms.plugin.chat.RunicChat;
 import com.runicrealms.plugin.chat.api.chat.ChatChannel;
 import com.runicrealms.plugin.chat.api.event.ChatChannelMessageEvent;
 import com.runicrealms.plugin.chat.channels.StaffChannel;
-import com.runicrealms.plugin.bank.BankManager;
-import com.runicrealms.plugin.bank.RunicBank;
-import com.runicrealms.plugin.RunicCore;
-import com.runicrealms.plugin.npcs.api.NpcClickEvent;
-import com.runicrealms.plugin.bank.api.event.BankOpenEvent;
 import com.runicrealms.plugin.common.util.ColorUtil;
-import com.runicrealms.plugin.bank.model.BankHolder;
+import com.runicrealms.plugin.npcs.api.NpcClickEvent;
 import com.runicrealms.plugin.party.Party;
 import com.runicrealms.plugin.party.event.LeaveReason;
 import com.runicrealms.plugin.party.event.PartyLeaveEvent;
 import com.runicrealms.plugin.rdb.RunicDatabase;
 import com.runicrealms.plugin.runicitems.item.RunicItem;
-import com.runicrealms.plugin.runicmod.api.SpyAPI;
-import com.runicrealms.plugin.runicmod.ui.preview.InventoryPreview;
 import com.runicrealms.plugin.runicmod.RunicMod;
+import com.runicrealms.plugin.runicmod.api.SpyAPI;
 import com.runicrealms.plugin.runicmod.ui.preview.BankPreview;
+import com.runicrealms.plugin.runicmod.ui.preview.InventoryPreview;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -293,6 +293,7 @@ public final class SpyManager implements SpyAPI, Listener {
             }
 
             spy.teleport(event.getTo(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            spy.setGameMode(GameMode.SPECTATOR);
         }
     }
 
